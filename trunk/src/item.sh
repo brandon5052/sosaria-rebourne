@@ -295,3 +295,50 @@ function item_equip_equipment
 	
 	return 0
 }
+
+# Return the target type for a given consumable item, which is placed in
+# g_return.
+#
+# $1	The item index of the item to check
+function item_get_target_type
+{
+	local -a params
+	
+	params=(${_item_param[$1]})
+	g_return=${params[1]}
+}
+
+# Use an item on a monster.
+#
+# $1	The item index of the item to use
+# $2	Monster index of the monster using the item
+# $3	Monster index of the target of the item
+function item_use_item
+{
+	local -a params
+	
+	params=(${_item_param[$1]})
+	${params[0]} "$2" "$3" "${params[2]}" "${params[3]}" "${params[4]}"
+}
+
+# Healing potion proceedure
+#
+# $1	Monster index of the monster using the item
+# $2	Monster index of the target of the item
+# $3	Minimum amount of damage to heal
+# $4	Maximum amount of damage to heal
+function item_proc_pot_heal
+{
+	combat_take_damage $2 $(( ( (RANDOM % ($4 - $3) + 1) + $3 ) * -1 ))
+}
+
+# Exploding item proceedure
+#
+# $1	Monster index of the monster using the item
+# $2	Monster index of the target of the item
+# $3	Minimum amount of damage
+# $4	Maximum amount of damag
+function item_proc_explosion
+{
+	combat_take_damage $2 $(( (RANDOM % ($4 - $3) + 1) + $3 ))
+}

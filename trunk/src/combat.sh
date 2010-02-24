@@ -39,6 +39,8 @@ declare -r _combat_highlight_color=$COLOR_BLUE
 declare -r _combat_target_highlight_color=$COLOR_RED
 declare -r _combat_msg_bg=$COLOR_RED
 declare -r _combat_msg_fg=$COLOR_WHITE
+declare -r _combat_msg_heal_bg=$COLOR_GREEN
+declare -r _combat_msg_heal_fg=$COLOR_WHITE
 declare -r _combat_ranged_fg=$COLOR_WHITE
 declare -r _combat_ranged_bg=$COLOR_BLACK
 declare -r _combat_msg_sleep="0.5"
@@ -676,15 +678,25 @@ function combat_player_target_handler
 # map tile.
 #
 # $1	The monster index of the monster being damaged
-# $2	The amount of damage
+# $2	The amount of damage (negative for healing)
 function combat_take_damage
 {
-	local status_string
+	local status_string 
 	
 	# Damage animation
-	combat_render_mob_text $1 1 "$2" $_combat_msg_bg $_combat_msg_fg
+	if (( $2 >= 0 )); then
+		combat_render_mob_text $1 1 "$2" $_combat_msg_bg $_combat_msg_fg
+	else
+		combat_render_mob_text $1 1 "$(( $2 * -1 ))" $_combat_msg_heal_bg \
+			$_combat_msg_heal_fg
+	fi
 	
 	(( _combat_mob_hp[$1] -= $2 ))
+	
+	# Over maximum HP
+	if (( _combat_mob_hp[$1] > _combat_mob_hpmax[$1] )); then
+		_combat_mob_hp[$1]=${_combat_mob_hpmax[$1]}
+	fi
 	
 	# Mob is dead
 	if (( _combat_mob_hp[$1] < 0 )); then
@@ -923,6 +935,8 @@ function combat_player_attack_handler
 # $1	The monster index of the player
 function combat_do_player_round
 {
+	local item_idx target_idx
+	
 	while :; do
 		# Highlight the player character
 		combat_render_mob $1 $_combat_highlight_color
@@ -940,6 +954,46 @@ function combat_do_player_round
 		m|M) combat_player_move_handler $1 ;;
 		# Attack
 		a|A) combat_player_attack_handler $1 ;;
+		# Use Item
+		u|U)
+			# If we cancel the item selection, cancel
+			if ! ui_inventory "C" $1; then
+				false
+			else
+				item_idx=$g_return
+				
+				# Get a target
+				item_get_target_type $item_idx
+				case $g_return in
+				P)
+					# If we cancel target selection, cancel
+					if ! ui_select_party_member; then
+						target_idx="-1"
+					else
+						target_idx=$g_return
+					fi
+				;;
+				M)
+					# If we cancel target selection, cancel
+					if ! combat_player_target_handler $1 "ranged" \
+						"monster"; then
+						target_idx="-1"
+					else
+						target_idx=$g_return
+					fi
+				;;
+				*) target_idx="-1" ;;
+				esac
+				
+				if (( target_idx >= 0 )); then
+					# Use the item
+					item_use_item $item_idx $1 $target_idx
+					true
+				else
+					false
+				fi
+			fi
+		;;
 		# Pass
 		p|P|SPACE) true ;;
 		# Z-Stats

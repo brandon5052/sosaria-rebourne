@@ -1,14 +1,20 @@
 Systems to Implement
-* Item system
-  * Items
++ Item system
+  + Items
     + Equipable items
-    * Usable items and proceedures
+    + Usable items and proceedures
   + Inventory UI
-  * Use Item UI
+  + Use Item UI
   + Equip Item UI
   + Drop Item UI
   + Add Item Function
   + Drop Item Function
+* Animations
+  * More generalized ranged animation wrapper
+  * Generic one-tile scoped, multiple-effected-tiles animation system
+  * Explosion animation
+  * Healing animation
+  * Extra data for ranged weapons and monsters about projectile char & color
 * Ranged Combat
   + Ranged targeting
   + Ranged attack

@@ -102,16 +102,30 @@ function ui_ask_yes_no
 }
 
 # Render the roster
+#
+# $1	If present, the monster index of the selected party member
 function ui_render_roster
 {
-	local idx
+	local idx selection
+	
+	if [ -z "$1" ]; then
+		selection="-1"
+	else
+		selection=$1
+	fi
 	
 	vt100_high
 	for (( idx=_combat_num_mobs; \
 		idx < _combat_num_mobs + _combat_num_chars; idx++ )); do
 		vt100_goto $_ui_roster_x \
 			$(( _ui_roster_y + ( idx - _combat_num_mobs ) ))
-		vt100_fg $COLOR_WHITE
+		if (( selection == idx )); then
+			vt100_fg $_ui_inventory_hlfg
+			vt100_bg $_ui_inventory_hlbg
+		else
+			vt100_fg $_ui_inventory_fg
+			vt100_bg $_ui_inventory_bg
+		fi
 		echo -n "$_log_blank_line"
 		vt100_goto $_ui_roster_x \
 			$(( _ui_roster_y + ( idx - _combat_num_mobs ) ))
@@ -131,7 +145,7 @@ function ui_render_roster
 # Returns non-zero if the user canceles.
 function ui_select_party_member
 {
-	local select_step=1 cur_target last_target=-1
+	local select_step=1 cur_target
 	(( cur_target=_combat_num_mobs - 1 ))
 	
 	ui_new_help_line "[Move: ARROWS/jk] [Confirm: ENTER/A] [Cancel: ESCAPE/SPACE]"
@@ -156,19 +170,8 @@ function ui_select_party_member
 			continue
 		fi
 		
-		# Erase carret from last target
-		if (( last_target >= _combat_num_mobs )); then
-			vt100_goto $(( _ui_roster_x - 1 )) \
-				$(( _ui_roster_y + (last_target - _combat_num_mobs) ))
-			echo -n " "
-		fi
-		last_target=$cur_target
-		# Place a carret on our current target
-		vt100_goto $(( _ui_roster_x - 1 )) \
-			$(( _ui_roster_y + (cur_target - _combat_num_mobs) ))
-		vt100_high
-		vt100_fg $COLOR_TEAL
-		echo -n ">"
+		# Display
+		ui_render_roster $cur_target
 
 		# Input handling
 		while :; do
@@ -177,18 +180,12 @@ function ui_select_party_member
 			k|K|UP|LEFT) select_step=-1; break ;;
 			j|J|DOWN|RIGHT|TAB) select_step=1; break ;;
 			ENTER|a|A)
+				ui_render_roster
 				g_return=$cur_target
-				# Erase carret from last target
-				vt100_goto $(( _ui_roster_x - 1 )) \
-					$(( _ui_roster_y + (cur_target - _combat_num_mobs) ))
-				echo -n " "
 				return 0
 			;;
 			ESCAPE|SPACE)
-				# Erase carret from last target
-				vt100_goto $(( _ui_roster_x - 1 )) \
-					$(( _ui_roster_y + (cur_target - _combat_num_mobs) ))
-				echo -n " "
+				ui_render_roster
 				return 1
 			;;
 			esac

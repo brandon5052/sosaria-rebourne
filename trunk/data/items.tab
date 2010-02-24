@@ -11,7 +11,7 @@
 #	AC		Armor class
 #	DMG		Damage
 #	Proc	Function name to be invoked for this item
-#	TGT		Target Type, either "M" for monster, "P" for player, "A" for any
+#	TGT		Target Type, either "M" for monster or "P" for player
 #	ParamX	A numbered parameter, usually to a proceedure function
 #
 # Item Types:
@@ -96,7 +96,15 @@
 # Consumables
 #
 #
-#	Name					STR	DEX	INT	TYP	Proc							TGT	Param1		Param2
-512	Healing_Potion			0	0	7	C	item_proc_pot_heal				P
-513	Curing_Potion			0	0	5	C	item_proc_pot_cure				P
-514 Exploding_Potion		0	7	5	C	item_proc_explosion				M
+# Healing pots
+#	Name					STR	DEX	INT	TYP	Proc							TGT	Min Heal	Max Heal
+512	Minor_Healing_Potion	0	0	5	C	item_proc_pot_heal				P	20			30
+513	Healing_Potion			0	0	7	C	item_proc_pot_heal				P	50			75
+514	Major_Healing_Potion	0	0	14	C	item_proc_pot_heal				P	500			500
+# Healing pots
+#	Name					STR	DEX	INT	TYP	Proc							TGT
+528	Curing_Potion			0	0	5	C	item_proc_pot_cure				P
+# Healing pots
+#	Name					STR	DEX	INT	TYP	Proc							TGT	Min Damage	Max Damage
+544 Small_Exploding_Potion	0	7	3	C	item_proc_explosion				M	15			25
+
