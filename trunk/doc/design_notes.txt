@@ -1,0 +1,31 @@
+= Combat Statistics
+    Characters have the following attributes: Strength, Dexderity,
+Intelligence, Damage, Armor Class, Hit Points, Magic Points.
+
+Attack:
+effective_ac = ac + dex / 2
+to_hit = effective_ac - my_dex / 2
+hit_roll = rand(20)
+if hit_roll == 20:
+	if hit_roll > to_hit:
+		crit
+	else:
+		hit
+elif hit_roll >= to_hit:
+	hit
+elif hit_roll == 1:
+	crit_fail
+
+Damage:
+damage_mod = rand(damage/4)
+effective_damage = damage - damage_mod + (strength / 2)
+effective_damage -= (his.strength / 4)
+if effective_damage < 1:
+	effective_damage = 1
+my_hp -= effective_damage
+
+Monster Spawning:
+while number_to_spawn > number_in_party * 2 or number_to_spawn < number_in_party - 2
+	number_to_spawn = rand(16)
+spawn_leader = rand(8) == 1
+followers_to_spawn=

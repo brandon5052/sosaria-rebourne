@@ -1,0 +1,102 @@
+# Items table
+#
+# Column Names:
+#	#		Item index number
+#	Name	Name of the item. _'s will be replaced with spaces
+#	STR		Strength requirement
+#	DEX		Dexderity requirement
+#	INT		Intelligence requirement
+#	TYP		Item type
+#	NUL		Must be 0
+#	AC		Armor class
+#	DMG		Damage
+#	Proc	Function name to be invoked for this item
+#	TGT		Target Type, either "M" for monster, "P" for player, "A" for any
+#	ParamX	A numbered parameter, usually to a proceedure function
+#
+# Item Types:
+#	A		Accessory
+#	B		Body armor
+#	C		Consumable
+#	H		Helm
+#	M		Melee weapon
+#	m		2-Handed Melee weapon
+#	N		None
+#	R		Ranged weapon
+#	r		2-Handed Ranged weapon
+#	S		Shield
+#
+# Proc is called on-use for consumables, on-attatch and on-dettatch for
+# accessories.
+#
+#
+# Special
+#
+#
+#	Name					STR	DEX	INT	TYP	NUL
+0	None					0	0	0	N	0
+#
+#
+# Helms
+#
+#
+#	Name					STR	DEX	INT	TYP	AC
+1	Chainmail_Coif			10	5	0	H	2
+#
+#
+# Body Armor
+#
+#
+#	Name					STR	DEX	INT	TYP	AC
+64	Chainmail				12	7	0	B	5
+#
+#
+# Shields
+#
+#
+#	Name					STR	DEX	INT	TYP	AC
+128	Wooden_Shield			10	8	0	S	2
+#
+#
+# Melee Weapons
+#
+#
+#	Name					STR	DEX	INT	TYP	DMG
+192	Longsword				12	7	0	M	10
+#
+#
+# 2-Handed Melee Weapons
+#
+#
+#	Name					STR	DEX	INT	TYP	DMG
+256	Claymore				15	10	0	m	15
+#
+#
+# Ranged Weapons
+#
+#
+#	Name					STR	DEX	INT	TYP	DMG
+320	Sling					5	5	0	R	4
+#
+#
+# 2-Handed Ranged Weapons
+#
+#
+#	Name					STR	DEX	INT	TYP	DMG
+384	Bow						10	10	0	m	7
+#
+#
+# Accessories
+#
+#
+#	Name					STR	DEX	INT	TYP	Proc
+448	Ring_of_Invisibility	0	0	10	A	item_proc_invis
+#
+#
+# Consumables
+#
+#
+#	Name					STR	DEX	INT	TYP	Proc							TGT	Param1		Param2
+512	Healing_Potion			0	0	7	C	item_proc_pot_heal				P
+513	Curing_Potion			0	0	5	C	item_proc_pot_cure				P
+514 Exploding_Potion		0	7	5	C	item_proc_explosion				M

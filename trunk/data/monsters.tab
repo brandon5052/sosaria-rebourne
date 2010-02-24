@@ -1,0 +1,25 @@
+# Monsters table
+#
+# Column Names
+#	#		Monster Number
+#	F#		Follower Monster Number
+#	L#		Leader Monster Number
+#	Name	Name of the monster. _'s will be replaced with spaces
+#	TILE	Tile number to use for this monster
+#	EXP		Experiance points this monster will give the party
+#	STR		Strength
+#	DEX		Dexderity
+#	INT		Intelligence
+#	DMG		Base damage
+#	AC		Armor class
+#	HP		Hit points (starting and max)
+#	MP		Magic points (starting and max)
+#	ATK		Attack type
+#
+# Attack types (ATK Column)
+#	C	close
+#	R	ranged
+#	r	close/ranged
+#	F#	L#	Name					TILE	EXP	STR	DEX	INT	DMG	AC	HP	MP	ATK
+0	0	0	Mongbat_Test_Spaces		513		5	2	7	10	4	1	10	10	C
+1	0	0	Skeleton				512		10	6	6	0	4	3	15	0	C

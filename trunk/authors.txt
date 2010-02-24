@@ -1,0 +1,8 @@
+This is a list of contributors to Sosaria Rebourne along with the year(s) in
+which they contributed. Each contributor has copyright over a portion of
+code present in Sosaria Rebourne and has made their contribution under the
+terms of the GNU General Public License.
+
+Please keep this list alphabetical.
+
+Lancaster, Norman B. (2010)

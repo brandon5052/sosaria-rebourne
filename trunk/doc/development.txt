@@ -1,0 +1,21 @@
+Systems to Implement
+* Item system
+  * Items
+    + Equipable items
+    * Usable items and proceedures
+  + Inventory UI
+  * Use Item UI
+  + Equip Item UI
+  + Drop Item UI
+  + Add Item Function
+  + Drop Item Function
+* Ranged Combat
+  + Ranged targeting
+  + Ranged attack
+  + Projectile animation
+  * Ranged AI
+* Magic
+* World Map / Area Map
+* Dialog
+* Shopping
+* 3D Dungeons ???

@@ -1,0 +1,15 @@
+# Default party equipment table
+#
+# Column Names
+#	#		Party index number
+#	HD		Item equiped on head
+#	BDY		Item equiped on the body
+#	AC1		Item equiped as the first accessory
+#	AC2		Item equiped as the second accessory
+#	WPN		Item equiped as a weapon
+#	SHD		Item equiped as a shield
+#
+#	HD	BDY	AC1	AC2	WPN	SHD
+0	1	64	0	0	192	0
+1	0	0	448	0	0	0
+2	1	64	0	0	256	0
