@@ -21,5 +21,5 @@
 #	R	ranged
 #	r	close/ranged
 #	F#	L#	Name					TILE	EXP	STR	DEX	INT	DMG	AC	HP	MP	ATK
-0	0	0	Mongbat_Test_Spaces		513		5	2	7	10	4	1	10	10	C
-1	0	0	Skeleton				512		10	6	6	0	4	3	15	0	C
+0	0	0	a_Mongbat				513		5	2	7	10	4	1	10	10	C
+1	0	0	a_Skeleton				512		10	6	6	0	4	3	15	0	C

@@ -24,30 +24,90 @@ declare -r _common_screen_width=97
 # Globals
 declare -a _common_at_exit_handlers
 
-# Feature detection for the sleep function
-# In bash 4+ we use read with a timeout
+# Feature detection for the sleep function jiffy_sleep. This function sleeps
+# for an amount of time represented in "jiffies", here one onehundredth of a
+# second.
+#
+# Note that if the version of BASH is prior to 4 and the system's sleep
+# command does not allow fractional sleep times, the sleep duration will be
+# rounded to the nearest second.
+#
+# $1	The number of jiffies to sleep
+#
+# In bash 4+ we use read with a timeout because it's a built-in and fairly
+# accurate.
 if (( BASH_VERSINFO[0] >= 4 )); then
 	function jiffy_sleep
 	{
-		local buffer
-		IFS= read -st $1 buffer
+		local ms=$(( $1 ))
+		local sleep_format=$(printf "%d.%03d" $(( ms / 1000 )) \
+			$(( ms % 1000 )) )
+		IFS= read -st $sleep_format buffer
 	}
+# Otherwise use the system sleep function
 elif type sleep >/dev/null 2>&1; then
+	# Figure out how long it takes to invoke sleep
+	declare _common_sleep_invoke_time=0
+	function jiffy_sleep_calibrate
+	{
+		local idx tmpfile tmpfile_contents seconds ms
+		tmpfile=$(mktemp)
+		
+		echo "Calibrating Sleep Routine"
+		(time for (( idx=0; idx < 10; idx++ )); do sleep 0; done) 2> $tmpfile
+		tmpfile_contents=($(cat $tmpfile) )
+		rm -f $tmpfile 2>/dev/null
+		seconds=${tmpfile_contents[1]#*m}
+		ms=${seconds#*.}
+		ms=${ms%s}
+		ms=${ms#0}
+		ms=${ms#0}
+		seconds=${seconds%.*}
+		(( ms += seconds * 1000 ))
+		(( _common_sleep_invoke_time = ms / 10 ))
+	}
+	# Sleep is capable of fractional sleep times, yay!
 	if sleep 0.1 >/dev/null 2>&1; then
 		function jiffy_sleep
 		{
-			sleep $1
+			local ms=$(( $1 * 10 - _common_sleep_invoke_time ))
+			
+			# The invokation of sleep will take longer than the sleep time
+			if (( ms < 0 )); then
+				(( ms *= -1 ))
+				# If the overage is greater than the requested sleep time, then
+				# we would be delaying at least 2X the requested sleep time. In
+				# this case, just return without sleeping.
+				if (( ms > $1 * 10 )); then return 0; fi
+				# Otherwise issue a sleep 0
+				sleep 0
+			fi
+			
+			local sleep_format=$(printf "%d.%03d" $(( ms / 1000 )) \
+				$(( ms % 1000 )) )
+			sleep "$sleep_format"
 		}
 	else
 		function jiffy_sleep
 		{
-			local to_sleep=${1%.*}
-			if (( to_sleep < 1 )); then
-				to_sleep=1
+			local ms=$(( $1 * 10 - _common_sleep_invoke_time ))
+			
+			# Just invoking sleep would delay more than we wanted, so don't.
+			if (( ms < 0 )); then return 0; fi
+			
+			# Round to the nearest hundred
+			local jiffies=$1
+			if (( jiffies % 100 < 50 )); then
+				(( jiffies -= jiffies % 100 ));
+			else
+				(( jiffies += 100 - (jiffies % 100) ))
 			fi
-			sleep $to_sleep
+			
+			sleep $(( jiffies / 100 ))
 		}
 	fi
+	jiffy_sleep_calibrate
+# If all else fails we just won't sleep
 else
 	function jiffy_sleep
 	{
@@ -93,6 +153,24 @@ function error
 	if [ "$2" -ne 0 ]; then
 		exit $2
 	fi
+}
+
+# Convert the first character of a string to uppercase, and place the new
+# string in g_return.
+#
+# $1	String to uppercase
+function uppercase_first_character
+{
+	local first="${1:0:1}"
+	local rest="${1:1}"
+	local first_code=$(printf "%d" "'$first")
+	local octal_code
+	if (( first_code >= 97 && first_code <= 122 )); then
+		(( first_code -= 32 ))
+	fi
+	octal_code=$(printf "%o" $first_code)
+	first=$(printf "\\$octal_code")
+	g_return="$first$rest"
 }
 
 # Place the class string for a class letter in g_return

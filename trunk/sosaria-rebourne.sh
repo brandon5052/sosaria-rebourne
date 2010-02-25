@@ -36,6 +36,7 @@ declare g_return
 . ./src/log.sh
 . ./src/ui.sh
 . ./src/item.sh
+. ./src/animation.sh
 
 at_exit "vt100_defaults; vt100_clear"
 
@@ -45,15 +46,15 @@ if ! load_last_save; then
 	load_last_save
 fi
 
+tiles_init
+item_init
+combat_init
+
 vt100_bg $COLOR_BLACK
 vt100_fg $COLOR_WHITE
 vt100_high
 vt100_clear
 vt100_home
-
-tiles_init
-item_init
-combat_init
 combat_mode trees 1 
 
 exit 0

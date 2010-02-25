@@ -43,9 +43,9 @@ declare -r _combat_msg_heal_bg=$COLOR_GREEN
 declare -r _combat_msg_heal_fg=$COLOR_WHITE
 declare -r _combat_ranged_fg=$COLOR_WHITE
 declare -r _combat_ranged_bg=$COLOR_BLACK
-declare -r _combat_msg_sleep="0.5"
-declare -r _combat_mob_move_sleep="0.25"
-declare -r _combat_anim_step_sleep="0.01"
+declare -r _combat_msg_sleep=500
+declare -r _combat_mob_move_sleep=250
+declare -r _combat_ranged_sleep=2
 
 # Map data
 declare -a _combat_map_tile
@@ -722,17 +722,28 @@ function combat_take_damage
 	fi
 }
 
-# Do a ranged attack animation
+# Do a ranged attack animation. If the points indicated by $1,$2 $3,$4 are not
+# far enough away to need a ranged animation, do not do one.
 #
 # $1	X position of source
 # $2	Y position of source
 # $3	X position of destination
 # $4	Y position of destination
+# $5	Character to use for the projectile
+# $6	Background color for the projectile
+# $7	Foreground color for the projectile
 function combat_ranged_animation
 {
-	# WORKING
 	local Ax Ay Bx By travel_x travel_y abs_tx abs_ty steps step_x step_y idx
 	local cur_x cur_y stepped_x stepped_y
+	local dx dy
+
+	# Distance check
+	(( dx = $3 - $1 ))
+	(( dy = $4 - $2 ))
+	if (( dx < 0 )); then (( dx *= -1 )); fi
+	if (( dy < 0 )); then (( dy *= -1 )); fi
+	if (( dx <= 1 && dy <= 1 )); then return 0; fi
 	
 	# Go from the center of the source tile to the center of the destination
 	(( Ax = $1 * tiles_char_width + ( tiles_char_width / 2 ) ))
@@ -772,15 +783,17 @@ function combat_ranged_animation
 		(( cur_x = stepped_x / 1000 ))
 		(( cur_y = stepped_y / 1000 ))
 		vt100_goto $cur_x $cur_y
-		vt100_fg $_combat_ranged_fg
-		vt100_bg $_combat_ranged_bg
+		vt100_fg $7
+		vt100_bg $6
 		vt100_high
-		echo -n "*"
+		echo -n "$5"
 		ui_park_cursor
-		jiffy_sleep $_combat_anim_step_sleep
+		jiffy_sleep $_combat_ranged_sleep
 		combat_render_position $(( cur_x / tiles_char_width )) \
 			$(( cur_y / tiles_char_height ))
 	done
+	
+	return 0
 }
 
 # Perform an attack.
@@ -834,7 +847,8 @@ function combat_attack
 		
 		# Animation
 		combat_ranged_animation ${_combat_mob_pos_x[$1]} \
-			${_combat_mob_pos_y[$1]} $range_x $range_y
+			${_combat_mob_pos_y[$1]} $range_x $range_y "*" $COLOR_BLACK \
+			$COLOR_WHITE
 		
 		# Miss display on target
 		if (( hit_roll == 1 || hit_roll < to_hit )); then
@@ -930,13 +944,55 @@ function combat_player_attack_handler
 	combat_attack $1 $g_return
 }
 
+# Input handler for using an item
+#
+# $1	The monster index of the player
+function combat_player_use_item
+{
+	local item_idx target_idx
+
+	# If we cancel the item selection, cancel
+	if ! ui_inventory "C" $1; then
+		return 1
+	fi
+	item_idx=$g_return
+
+	# Get a target
+	item_get_target_type $item_idx
+	case $g_return in
+	P)
+		# If we cancel target selection, cancel
+		if ! ui_select_party_member; then
+			return 1
+		fi
+		target_idx=$g_return
+	;;
+	M)
+		# If we cancel target selection, cancel
+		if ! combat_player_target_handler $1 "ranged" "monster"; then
+			return 1
+		fi
+		target_idx=$g_return
+	;;
+	*) return 1 ;;
+	esac
+
+	# Ranged animation
+	combat_ranged_animation ${_combat_mob_pos_x[$1]} ${_combat_mob_pos_y[$1]} \
+		${_combat_mob_pos_x[$target_idx]} ${_combat_mob_pos_y[$target_idx]} \
+		"*" $COLOR_RED $COLOR_BLACK
+
+	# Use the item
+	item_use_item $item_idx $1 $target_idx
+	
+	return 0
+}
+
 # Perform a player round
 #
 # $1	The monster index of the player
 function combat_do_player_round
 {
-	local item_idx target_idx
-	
 	while :; do
 		# Highlight the player character
 		combat_render_mob $1 $_combat_highlight_color
@@ -955,45 +1011,7 @@ function combat_do_player_round
 		# Attack
 		a|A) combat_player_attack_handler $1 ;;
 		# Use Item
-		u|U)
-			# If we cancel the item selection, cancel
-			if ! ui_inventory "C" $1; then
-				false
-			else
-				item_idx=$g_return
-				
-				# Get a target
-				item_get_target_type $item_idx
-				case $g_return in
-				P)
-					# If we cancel target selection, cancel
-					if ! ui_select_party_member; then
-						target_idx="-1"
-					else
-						target_idx=$g_return
-					fi
-				;;
-				M)
-					# If we cancel target selection, cancel
-					if ! combat_player_target_handler $1 "ranged" \
-						"monster"; then
-						target_idx="-1"
-					else
-						target_idx=$g_return
-					fi
-				;;
-				*) target_idx="-1" ;;
-				esac
-				
-				if (( target_idx >= 0 )); then
-					# Use the item
-					item_use_item $item_idx $1 $target_idx
-					true
-				else
-					false
-				fi
-			fi
-		;;
+		u|U) combat_player_use_item $1 ;;
 		# Pass
 		p|P|SPACE) true ;;
 		# Z-Stats

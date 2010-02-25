@@ -11,8 +11,6 @@
 #	AC		Armor class
 #	DMG		Damage
 #	Proc	Function name to be invoked for this item
-#	TGT		Target Type, either "M" for monster or "P" for player
-#	ParamX	A numbered parameter, usually to a proceedure function
 #
 # Item Types:
 #	A		Accessory
@@ -41,7 +39,7 @@
 #
 #
 #	Name					STR	DEX	INT	TYP	AC
-1	Chainmail_Coif			10	5	0	H	2
+1	a_Chainmail_Coif		10	5	0	H	2
 #
 #
 # Body Armor
@@ -55,56 +53,55 @@
 #
 #
 #	Name					STR	DEX	INT	TYP	AC
-128	Wooden_Shield			10	8	0	S	2
+128	a_Wooden_Shield			10	8	0	S	2
 #
 #
 # Melee Weapons
 #
 #
 #	Name					STR	DEX	INT	TYP	DMG
-192	Longsword				12	7	0	M	10
+192	a_Longsword				12	7	0	M	10
 #
 #
 # 2-Handed Melee Weapons
 #
 #
 #	Name					STR	DEX	INT	TYP	DMG
-256	Claymore				15	10	0	m	15
+256	a_Claymore				15	10	0	m	15
 #
 #
 # Ranged Weapons
 #
 #
 #	Name					STR	DEX	INT	TYP	DMG
-320	Sling					5	5	0	R	4
+320	a_Sling					5	5	0	R	4
 #
 #
 # 2-Handed Ranged Weapons
 #
 #
 #	Name					STR	DEX	INT	TYP	DMG
-384	Bow						10	10	0	m	7
+384	a_Bow					10	10	0	m	7
 #
 #
 # Accessories
 #
 #
 #	Name					STR	DEX	INT	TYP	Proc
-448	Ring_of_Invisibility	0	0	10	A	item_proc_invis
+448	a_Ring_of_Invisibility	0	0	10	A	item_proc_invis
 #
 #
 # Consumables
 #
 #
-# Healing pots
-#	Name					STR	DEX	INT	TYP	Proc							TGT	Min Heal	Max Heal
-512	Minor_Healing_Potion	0	0	5	C	item_proc_pot_heal				P	20			30
-513	Healing_Potion			0	0	7	C	item_proc_pot_heal				P	50			75
-514	Major_Healing_Potion	0	0	14	C	item_proc_pot_heal				P	500			500
-# Healing pots
+# Healing Potions
+#	Name					STR	DEX	INT	TYP	Proc							TGT	Min	Max
+512	a_Minor_Healing_Potion	0	0	5	C	item_proc_pot_heal				P	20	30
+513	a_Healing_Potion		0	0	7	C	item_proc_pot_heal				P	50	75
+514	a_Major_Healing_Potion	0	0	14	C	item_proc_pot_heal				P	500	500
+# Status Curing Potions
 #	Name					STR	DEX	INT	TYP	Proc							TGT
-528	Curing_Potion			0	0	5	C	item_proc_pot_cure				P
-# Healing pots
-#	Name					STR	DEX	INT	TYP	Proc							TGT	Min Damage	Max Damage
-544 Small_Exploding_Potion	0	7	3	C	item_proc_explosion				M	15			25
-
+528	a_Curing_Potion			0	0	5	C	item_proc_pot_cure				P
+# Explosion Potions
+#	Name					STR	DEX	INT	TYP	Proc							TGT	Min	Max
+544 a_Flaming_Oil_Potion	0	7	3	C	item_proc_explosion				M	15	25

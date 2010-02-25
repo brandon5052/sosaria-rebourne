@@ -10,7 +10,7 @@ Systems to Implement
   + Add Item Function
   + Drop Item Function
 * Animations
-  * More generalized ranged animation wrapper
+  + More generalized ranged animation wrapper
   * Generic one-tile scoped, multiple-effected-tiles animation system
   * Explosion animation
   * Healing animation
@@ -25,3 +25,14 @@ Systems to Implement
 * Dialog
 * Shopping
 * 3D Dungeons ???
+
+Issues to Resolve
+* Make equiping and unequiping items update stats.
+
+Changes
+Improved sleep function.
+Revamped combat_ranged_animation to be more generic.
+Refactored Use Item handler into combat_player_use_item.
+Added item ranged animations.
+Refactored item param field into a single parameter plus extended data.
+Added articles to monster and item names and made log_write uppercase the first character of every message.

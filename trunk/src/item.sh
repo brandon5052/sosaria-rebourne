@@ -25,6 +25,7 @@ declare -a _item_dex
 declare -a _item_int
 declare -a _item_type
 declare -a _item_param
+declare -a _item_ext
 
 # Party equipment data (uses indicies from the _combat_mob* tables)
 declare -a _item_mob_head
@@ -41,9 +42,9 @@ declare -a _item_party_amount
 # Load all item static data
 function item_init
 {
-	local idx name str dex int typ param
+	local idx name str dex int typ param ext
 	# Load item table
-	while read idx name str dex int typ param; do
+	while read idx name str dex int typ param ext; do
 		if [ "$idx" = "#" ]; then continue; fi
 		_item_name[$idx]="${name//_/ }"
 		_item_str[$idx]=$str
@@ -51,8 +52,8 @@ function item_init
 		_item_int[$idx]=$int
 		_item_type[$idx]=$typ
 		_item_param[$idx]=$param
+		_item_ext[$idx]="$ext"
 	done < "$g_static_data_path/items.tab"
-
 }
 
 # Load party data from save file
@@ -302,10 +303,10 @@ function item_equip_equipment
 # $1	The item index of the item to check
 function item_get_target_type
 {
-	local -a params
+	local -a ext
 	
-	params=(${_item_param[$1]})
-	g_return=${params[1]}
+	ext=(${_item_ext[$1]})
+	g_return=${ext[0]}
 }
 
 # Use an item on a monster.
@@ -315,10 +316,14 @@ function item_get_target_type
 # $3	Monster index of the target of the item
 function item_use_item
 {
-	local -a params
-	
-	params=(${_item_param[$1]})
-	${params[0]} "$2" "$3" "${params[2]}" "${params[3]}" "${params[4]}"
+	local -a ext
+
+	if ! item_remove_from_inventory $1; then
+		return 1
+	fi
+	log_write "${_combat_mob_name[$2]} used ${_item_name[$1]} on ${_combat_mob_name[$3]}."
+	ext=(${_item_ext[$1]})
+	${_item_param[$1]} "$2" "$3" "${ext[1]}" "${ext[2]}" "${params[3]}"
 }
 
 # Healing potion proceedure
@@ -340,5 +345,8 @@ function item_proc_pot_heal
 # $4	Maximum amount of damag
 function item_proc_explosion
 {
+	animation_single ${_combat_mob_pos_x[$2]} ${_combat_mob_pos_y[$2]} \
+		${_combat_mob_tile[$2]} animation_proc_random_chars $COLOR_RED \
+		$COLOR_YELLOW 20
 	combat_take_damage $2 $(( (RANDOM % ($4 - $3) + 1) + $3 ))
 }

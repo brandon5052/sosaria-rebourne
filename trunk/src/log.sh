@@ -42,6 +42,10 @@ function log_write
 		shift
 	done
 
+	# Make sure the message starts with a capitol letter
+	uppercase_first_character "$format"
+	format="$g_return"
+
 	# Process all words for line wrapping
 	words=($format)
 	msg=
