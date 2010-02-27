@@ -198,7 +198,15 @@ function ui_select_party_member
 # $1	The monster index of the monster
 function ui_display_status
 {
-	local mob_idx=$1
+	local mob_idx=$1 next_level next_exp
+	
+	# Bind minimum experiance for next level
+	if (( _combat_mob_level[$1] >= _combat_level_max )); then
+		next_exp="MAX LV"
+	else
+		(( next_level = _combat_mob_level[$1] + 1 ))
+		next_exp="${_combat_level_mins[$next_level]}"
+	fi
 	
 	get_class_string ${_combat_mob_class[$mob_idx]}
 	vt100_high
@@ -210,7 +218,7 @@ function ui_display_status
 	vt100_goto $_ui_roster_x $(( _ui_roster_y + 4 )); printf "Armor Class   %-2d            Gold 100000 " ${_combat_mob_ac[$mob_idx]}
 	vt100_goto $_ui_roster_x $(( _ui_roster_y + 5 )); printf "Base Damage   %-2d            Food 100000 " ${_combat_mob_dmg[$mob_idx]}
 	vt100_goto $_ui_roster_x $(( _ui_roster_y + 6 )); printf "Experiance    %-6d                    " ${_combat_mob_exp[$mob_idx]}
-	vt100_goto $_ui_roster_x $(( _ui_roster_y + 7 )); printf "Next Level    512000                    "
+	vt100_goto $_ui_roster_x $(( _ui_roster_y + 7 )); printf "Next Level    %-6s                    " "$next_exp"
 }
 
 # Display the equipment of a monster
@@ -235,22 +243,22 @@ function ui_display_equipment
 	vt100_goto $_ui_roster_x $(( _ui_roster_y + 1 )); echo -n "$_log_blank_line"
 	item_idx=${_item_mob_head[$mob_idx]}
 	if (( selected == 0 )); then vt100_fg $_ui_inventory_hlfg; vt100_bg $_ui_inventory_hlbg; else vt100_fg $_ui_inventory_fg; vt100_bg $_ui_inventory_bg; fi
-	vt100_goto $_ui_roster_x $(( _ui_roster_y + 2 )); printf "Head       %-24s %2d " "${_item_name[$item_idx]}" ${_item_param[$item_idx]}
+	vt100_goto $_ui_roster_x $(( _ui_roster_y + 2 )); printf "Head       %-24s %2d " "${_item_name[$item_idx]#* }" ${_item_param[$item_idx]}
 	item_idx=${_item_mob_body[$mob_idx]}
 	if (( selected == 1 )); then vt100_fg $_ui_inventory_hlfg; vt100_bg $_ui_inventory_hlbg; else vt100_fg $_ui_inventory_fg; vt100_bg $_ui_inventory_bg; fi
-	vt100_goto $_ui_roster_x $(( _ui_roster_y + 3 )); printf "Body       %-24s %2d " "${_item_name[$item_idx]}" ${_item_param[$item_idx]}
+	vt100_goto $_ui_roster_x $(( _ui_roster_y + 3 )); printf "Body       %-24s %2d " "${_item_name[$item_idx]#* }" ${_item_param[$item_idx]}
 	item_idx=${_item_mob_shield[$mob_idx]}
 	if (( selected == 2 )); then vt100_fg $_ui_inventory_hlfg; vt100_bg $_ui_inventory_hlbg; else vt100_fg $_ui_inventory_fg; vt100_bg $_ui_inventory_bg; fi
-	vt100_goto $_ui_roster_x $(( _ui_roster_y + 4 )); printf "Shield     %-24s %2d " "${_item_name[$item_idx]}" ${_item_param[$item_idx]}
+	vt100_goto $_ui_roster_x $(( _ui_roster_y + 4 )); printf "Shield     %-24s %2d " "${_item_name[$item_idx]#* }" ${_item_param[$item_idx]}
 	item_idx=${_item_mob_weapon[$mob_idx]}
 	if (( selected == 3 )); then vt100_fg $_ui_inventory_hlfg; vt100_bg $_ui_inventory_hlbg; else vt100_fg $_ui_inventory_fg; vt100_bg $_ui_inventory_bg; fi
-	vt100_goto $_ui_roster_x $(( _ui_roster_y + 5 )); printf "Weapon     %-24s %2d " "${_item_name[$item_idx]}" ${_item_param[$item_idx]}
+	vt100_goto $_ui_roster_x $(( _ui_roster_y + 5 )); printf "Weapon     %-24s %2d " "${_item_name[$item_idx]#* }" ${_item_param[$item_idx]}
 	item_idx=${_item_mob_accessory1[$mob_idx]}
 	if (( selected == 4 )); then vt100_fg $_ui_inventory_hlfg; vt100_bg $_ui_inventory_hlbg; else vt100_fg $_ui_inventory_fg; vt100_bg $_ui_inventory_bg; fi
-	vt100_goto $_ui_roster_x $(( _ui_roster_y + 6 )); printf "Accessory  %-24s    " "${_item_name[$item_idx]}"
+	vt100_goto $_ui_roster_x $(( _ui_roster_y + 6 )); printf "Accessory  %-24s    " "${_item_name[$item_idx]#* }"
 	item_idx=${_item_mob_accessory2[$mob_idx]}
 	if (( selected == 5 )); then vt100_fg $_ui_inventory_hlfg; vt100_bg $_ui_inventory_hlbg; else vt100_fg $_ui_inventory_fg; vt100_bg $_ui_inventory_bg; fi
-	vt100_goto $_ui_roster_x $(( _ui_roster_y + 7 )); printf "Accessory  %-24s    " "${_item_name[$item_idx]}"
+	vt100_goto $_ui_roster_x $(( _ui_roster_y + 7 )); printf "Accessory  %-24s    " "${_item_name[$item_idx]#* }"
 }
 
 # Display the status screen
@@ -520,10 +528,10 @@ function ui_inventory
 				
 				# Print item line
 				if (( item_idx == 0 )); then
-					printf "    %-24s           " "${_item_name[$item_idx]}"
+					printf "    %-24s           " "${_item_name[$item_idx]#* }"
 				else
 					printf "%3d %-24s %-10s" "${list_item_amount[$idx]}" \
-						"${_item_name[$item_idx]}" "$g_return"
+						"${_item_name[$item_idx]#* }" "$g_return"
 				fi
 			fi
 		done
@@ -536,7 +544,7 @@ function ui_inventory
 			j|J|DOWN) sel_dir=1; break ;;
 			d|D)
 				item_idx=${list_item_idx[$selection]}
-				if ui_ask_yes_no "Drop 1 ${_item_name[$item_idx]}?"; then
+				if ui_ask_yes_no "Drop ${_item_name[$item_idx]}?"; then
 					item_remove_from_inventory $item_idx
 				fi
 				ui_inventory "$1" "$2" "$3" "$selection"
@@ -544,7 +552,7 @@ function ui_inventory
 			;;
 			z|Z)
 				item_idx=${list_item_idx[$selection]}
-				if ui_ask_yes_no "Drop ALL ${_item_name[$item_idx]}?"; then
+				if ui_ask_yes_no "Drop EVERY ${_item_name[$item_idx]#* }?"; then
 					item_remove_from_inventory $item_idx 99999
 				fi
 				ui_inventory "$1" "$2" "$3" "$selection"

@@ -76,6 +76,20 @@ declare -a _combat_mob_pos_y
 declare -a _combat_mob_atype
 declare -a _combat_target
 
+# Leveling data
+declare -a _combat_level_mins
+declare -r _combat_level_primary_amount=12
+declare -r _combat_level_secondary_amount=8
+declare -r _combat_level_third_amount=4
+declare -r _combat_level_primary_mod=2
+declare -r _combat_level_primary_adjust=0
+declare -r _combat_level_secondary_mod=4
+declare -r _combat_level_secondary_adjust=1
+declare -r _combat_level_third_mod=4
+declare -r _combat_level_third_adjust="-1"
+declare -r _combat_level_max=16
+declare -r _combat_level_max_exp=819200
+
 # Globals
 declare _combat_num_party
 declare _combat_total_xp_earned
@@ -85,7 +99,7 @@ declare _combat_total_xp_earned
 # Load combat groups table
 function combat_init
 {
-	local map idx follower leader tab
+	local map idx follower leader tab exp
 	
 	echo "Loading combat data"
 	
@@ -104,6 +118,12 @@ function combat_init
 		_combat_monster_leader[$idx]=$leader
 		_combat_monster_tab[$idx]="$tab"
 	done < "$g_static_data_path/monsters.tab"
+	
+	# Load leveling data
+	while read idx exp; do
+		if [ "$idx" = "#" ]; then continue; fi
+		_combat_level_mins[$idx]=$exp
+	done < "$g_static_data_path/levels.tab"
 }
 
 # Load party data from the current save
@@ -1242,13 +1262,128 @@ function combat_do_monster_round
 	ui_render_roster
 }
 
-# Combat mode handler
+# Called when a monster levels up. This MUST be called once per level up.
+#
+# $1	The monster's index number
+# $2	The monster's new level
+function combat_on_level_up
+{
+	log_write "${_combat_mob_name[$1]} gained a level!"
+	
+	# Should increase primary attribute
+	if (( ($2 + _combat_level_primary_adjust) % \
+		_combat_level_primary_mod == 0 )); then
+		if [ "${_combat_mob_class[$1]}" = "F" -o \
+			"${_combat_mob_class[$1]}" = "P" ]; then
+			(( _combat_mob_str[$1]++ ))
+		elif [ "${_combat_mob_class[$1]}" = "R" -o \
+			"${_combat_mob_class[$1]}" = "T" ]; then
+			(( _combat_mob_dex[$1]++ ))
+		elif [ "${_combat_mob_class[$1]}" = "S" -o \
+			"${_combat_mob_class[$1]}" = "M" ]; then
+			(( _combat_mob_int[$1]++ ))
+		fi
+	# Should increase secondary attribute
+	elif (( ($2 + _combat_level_secondary_adjust) % \
+		_combat_level_secondary_mod == 0 )); then
+		if [ "${_combat_mob_class[$1]}" = "R" -o \
+			"${_combat_mob_class[$1]}" = "M" ]; then
+			(( _combat_mob_str[$1]++ ))
+		elif [ "${_combat_mob_class[$1]}" = "F" -o \
+			"${_combat_mob_class[$1]}" = "S" ]; then
+			(( _combat_mob_dex[$1]++ ))
+		elif [ "${_combat_mob_class[$1]}" = "P" -o \
+			"${_combat_mob_class[$1]}" = "T" ]; then
+			(( _combat_mob_int[$1]++ ))
+		fi
+	# Should increase third attribute
+	elif (( ($2 + _combat_level_third_adjust) % \
+		_combat_level_third_mod == 0 )); then
+		if [ "${_combat_mob_class[$1]}" = "S" -o \
+			"${_combat_mob_class[$1]}" = "T" ]; then
+			(( _combat_mob_str[$1]++ ))
+		elif [ "${_combat_mob_class[$1]}" = "P" -o \
+			"${_combat_mob_class[$1]}" = "M" ]; then
+			(( _combat_mob_dex[$1]++ ))
+		elif [ "${_combat_mob_class[$1]}" = "F" -o \
+			"${_combat_mob_class[$1]}" = "R" ]; then
+			(( _combat_mob_int[$1]++ ))
+		fi
+	fi
+}
+
+
+# Called to add experiance to a monster
+#
+# $1	The monster's index number
+# $2	The amount of experiance to award
+function combat_award_experiance
+{
+	local next_level
+	(( _combat_mob_exp[$1] += $2 ))
+	if (( _combat_mob_exp[$1] > _combat_level_max_exp )); then
+		_combat_mob_exp[$1]=$_combat_level_max_exp
+	fi
+	
+	# Level check
+	while :; do
+		if ((  _combat_mob_level[$1] < _combat_level_max )); then
+			(( next_level = _combat_mob_level[$1] + 1 ))
+			if (( _combat_mob_exp[$1] >= \
+				_combat_level_mins[$next_level] )); then
+				(( _combat_mob_level[$1]++ ))
+				combat_on_level_up $1 ${_combat_mob_level[$1]}
+			else
+				break
+			fi
+		else
+			break
+		fi
+	done
+}
+
+# Called when a battle is won
+function combat_victory_handler
+{
+	local idx award_count=0 award_amount
+	
+	log_write "Victory!"
+	
+	# Award experiance to all characters still in-bounds
+	for (( idx=_combat_num_mobs; \
+		idx < _combat_num_mobs + _combat_num_chars; idx++ )); do
+		if (( _combat_mob_pos_x[$idx] >= 0 )); then
+			(( award_count++ ))
+		fi
+	done
+	(( award_amount = _combat_total_xp_earned / award_count ));
+	# If we have some fractional XP left, round up
+	if (( _combat_total_xp_earned % award_count > 0 )); then
+		(( award_amount++ ))
+	fi
+	
+	# Do the award
+	log_write "Remaining party members gained $award_amount experiance."
+	for (( idx=_combat_num_mobs; \
+		idx < _combat_num_mobs + _combat_num_chars; idx++ )); do
+		if (( _combat_mob_pos_x[$idx] >= 0 )); then
+			combat_award_experiance $idx $award_amount
+		fi
+	done	
+}
+
+# Combat mode handler. Places a status code in g_return before returning.
+#
+# Status Codes:
+#	D	The party has been defeated with all members dead
+#	R	The party has ran away
+#	V	The party has achieved victory
 #
 # $1	The combat map to load
-# $2	The combat group to use
+# $2	The monster type to spawn
 function combat_mode
 {
-	local idx
+	local idx mob_idx victory=0 defeat=0
 	
 	_combat_total_xp_earned=0
 	
@@ -1275,22 +1410,71 @@ function combat_mode
 	
 	# Main input loop
 	while :; do
-		# Player turns
-		for (( idx=_combat_num_mobs; \
-			idx < _combat_num_mobs + _combat_num_chars; idx++ )); do
-			if [ -n "${_combat_mob_name[$idx]}" -a \
-				${_combat_mob_pos_x[$idx]} -ge 0 ]; then
-				combat_do_player_round $idx
+		mob_idx=_combat_num_mobs
+		while :; do
+			# Wrapping    
+			if (( mob_idx >= _combat_num_mobs + _combat_num_chars )); then
+				mob_idx=0
+			fi
+			
+			# Player turns
+			if (( mob_idx >= _combat_num_mobs )); then
+				if [ -n "${_combat_mob_name[$mob_idx]}" -a \
+					${_combat_mob_pos_x[$mob_idx]} -ge 0 ]; then
+					combat_do_player_round $mob_idx
+				fi
+			# Monster turns
+			else
+				if (( mob_idx == _combat_num_mobs )); then break; fi
+				if [ -n "${_combat_mob_name[$mob_idx]}" -a \
+					${_combat_mob_pos_x[$mob_idx]} -ge 0 ]; then
+					combat_do_monster_round $mob_idx
+				fi
+			fi
+			(( mob_idx++ ))
+		
+			# Defeat check. If there are any party member still in bounds we
+			# have not yet been defeated.
+			defeat=1
+			for (( idx=_combat_num_mobs; \
+				idx < _combat_num_mobs + _combat_num_chars; idx++ )); do
+				if (( _combat_mob_pos_x[$idx] >= 0 )); then
+					defeat=0
+				fi
+			done
+			if (( defeat == 1 )); then
+				g_return="D"
+				# Run check. If any party member is still alive, we ran.
+				for (( idx=_combat_num_mobs; \
+					idx < _combat_num_mobs + _combat_num_chars; idx++ )); do
+					if [ -n "${_combat_mob_name[$idx]}" ]; then
+						if [ ${_combat_mob_hp[$idx]} -gt 0 ]; then
+							echo "$idx HP=${_combat_mob_hp[$idx]}"
+							g_return="R"
+						fi
+					fi
+				done
+				if [ $g_return = "R" ]; then
+					log_write "The party escaped the battle!"
+				else
+					log_write "The party has been defeated."
+				fi
+				return 0
+			fi
+
+			# Victory check
+			victory=1
+			for (( idx=0; idx < _combat_num_mobs; idx++ )); do
+				# If any monster is still in bounds we have not won.
+				if (( _combat_mob_pos_x[$idx] >= 0 )); then
+					victory=0
+				fi
+			done
+			if (( victory == 1 )); then
+				combat_victory_handler
+				g_return="V"
+				return 0
 			fi
 		done
-		# Monster turns
-		for (( idx=0; idx < _combat_num_mobs; idx++ )); do
-			if [ -n "${_combat_mob_name[$idx]}" -a \
-				${_combat_mob_pos_x[$idx]} -ge 0 ]; then
-				combat_do_monster_round $idx
-			fi
-		done
-		# TODO - Defeat check
-		# TODO - Victory check
 	done
 }

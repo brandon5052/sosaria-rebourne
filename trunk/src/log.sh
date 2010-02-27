@@ -33,7 +33,7 @@ declare -a _log_lines
 # $@	All arguments are stuck together without spaces
 function log_write
 {
-	local format msg idx word
+	local format msg idx word old_return
 	local -a words
 	
 	# Build the format string
@@ -43,8 +43,10 @@ function log_write
 	done
 
 	# Make sure the message starts with a capitol letter
+	old_return="$g_return"
 	uppercase_first_character "$format"
 	format="$g_return"
+	g_return="$old_return"
 
 	# Process all words for line wrapping
 	words=($format)

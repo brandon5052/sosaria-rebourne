@@ -25,8 +25,7 @@ declare -r _common_screen_width=97
 declare -a _common_at_exit_handlers
 
 # Feature detection for the sleep function jiffy_sleep. This function sleeps
-# for an amount of time represented in "jiffies", here one onehundredth of a
-# second.
+# for an amount of time represented in "jiffies", here one millisecond.
 #
 # Note that if the version of BASH is prior to 4 and the system's sleep
 # command does not allow fractional sleep times, the sleep duration will be
@@ -70,7 +69,7 @@ elif type sleep >/dev/null 2>&1; then
 	if sleep 0.1 >/dev/null 2>&1; then
 		function jiffy_sleep
 		{
-			local ms=$(( $1 * 10 - _common_sleep_invoke_time ))
+			local ms=$(( $1 - _common_sleep_invoke_time ))
 			
 			# The invokation of sleep will take longer than the sleep time
 			if (( ms < 0 )); then
@@ -78,8 +77,9 @@ elif type sleep >/dev/null 2>&1; then
 				# If the overage is greater than the requested sleep time, then
 				# we would be delaying at least 2X the requested sleep time. In
 				# this case, just return without sleeping.
-				if (( ms > $1 * 10 )); then return 0; fi
+				if (( ms > $1 )); then return 0; fi
 				# Otherwise issue a sleep 0
+				echo "jiffy_sleep sleep 0" >&2
 				sleep 0
 			fi
 			
@@ -90,7 +90,7 @@ elif type sleep >/dev/null 2>&1; then
 	else
 		function jiffy_sleep
 		{
-			local ms=$(( $1 * 10 - _common_sleep_invoke_time ))
+			local ms=$(( $1 - _common_sleep_invoke_time ))
 			
 			# Just invoking sleep would delay more than we wanted, so don't.
 			if (( ms < 0 )); then return 0; fi

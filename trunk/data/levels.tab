@@ -1,0 +1,25 @@
+# Level progression chart
+#
+# Column Names
+#	#		Level number
+#	EXP		Minimum experiance points required
+#
+# Notes: Maximum level is 16
+#
+#	EXP
+1	0
+2	50
+3	100
+4	200
+5	400
+6	800
+7	1600
+8	3200
+9	6400
+10	12800
+11	25600
+12	51200
+13	102400
+14	204800
+15	409600
+16	819200

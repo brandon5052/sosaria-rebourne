@@ -215,10 +215,8 @@ function item_remove_from_inventory
 			(( _item_party_amount[$idx] -= $amount ))
 			# No more left, remove this entry
 			if (( _item_party_amount[$idx] <= 0 )); then
-				echo "REMOVE $idx ARRAY=${_item_party_idx[@]}" >&2
 				_item_party_idx=(${_item_party_idx[@]:0:$idx} ${_item_party_idx[@]:$((idx+1))})
 				_item_party_amount=(${_item_party_amount[@]:0:$idx} ${_item_party_amount[@]:$((idx+1))})
-				echo "AFTER REMOVE $idx ARRAY=${_item_party_idx[@]}" >&2
 			fi
 			return 0
 		fi

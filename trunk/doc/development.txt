@@ -11,8 +11,8 @@ Systems to Implement
   + Drop Item Function
 * Animations
   + More generalized ranged animation wrapper
-  * Generic one-tile scoped, multiple-effected-tiles animation system
-  * Explosion animation
+  - Generic one-tile scoped, multiple-effected-tiles animation system
+  + Explosion animation
   * Healing animation
   * Extra data for ranged weapons and monsters about projectile char & color
 * Ranged Combat
@@ -28,11 +28,13 @@ Systems to Implement
 
 Issues to Resolve
 * Make equiping and unequiping items update stats.
+* Randomly select starting position for monsters.
+* Include follower and leader spawns.
+* In party member selection UI disable party members that are out of bounds.
 
 Changes
-Improved sleep function.
-Revamped combat_ranged_animation to be more generic.
-Refactored Use Item handler into combat_player_use_item.
-Added item ranged animations.
-Refactored item param field into a single parameter plus extended data.
-Added articles to monster and item names and made log_write uppercase the first character of every message.
+Added defeat condition to combat_mode
+Added victory condition to combat_mode
+Removed articles from item names in inventory and equipment UIs
+Added experiance awards at end of battle
+Added leveling up handler

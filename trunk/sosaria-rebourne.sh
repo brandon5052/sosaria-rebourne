@@ -50,11 +50,21 @@ tiles_init
 item_init
 combat_init
 
+# Screen init
 vt100_bg $COLOR_BLACK
 vt100_fg $COLOR_WHITE
 vt100_high
 vt100_clear
 vt100_home
-combat_mode trees 1 
+
+# Test combat loop
+while :; do
+	combat_mode trees 1
+	# Party has died, reload
+	if [ "$g_return" = "D" ]; then
+		log_write "Re-loading party from save."
+		combat_load_from_save
+	fi
+done
 
 exit 0
