@@ -10,6 +10,6 @@
 #	SHD		Item equiped as a shield
 #
 #	HD	BDY	AC1	AC2	WPN	SHD
-0	1	64	0	0	192	0
-1	0	0	448	0	320	0
-2	1	64	0	0	256	0
+0	0	0	0	0	0	0
+1	0	0	0	0	0	0
+2	0	0	0	0	0	0

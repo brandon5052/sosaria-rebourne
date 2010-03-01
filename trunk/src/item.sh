@@ -56,6 +56,35 @@ function item_init
 	done < "$g_static_data_path/items.tab"
 }
 
+# Save party inventory and equipment to the current save
+function item_save
+{
+	local idx
+	
+	# Save equipment
+	for (( idx=_combat_num_mobs; \
+		idx < _combat_num_mobs + _combat_num_chars; idx++ )); do
+		# Skip empty slots
+		if [ -z "${_combat_mob_name[$idx]}" ]; then
+			continue
+		fi
+		echo -n "$idx	"
+		echo -n "${_item_mob_head[$idx]}	"
+		echo -n "${_item_mob_body[$idx]}	"
+		echo -n "${_item_mob_accessory1[$idx]}	"
+		echo -n "${_item_mob_accessory2[$idx]}	"
+		echo -n "${_item_mob_weapon[$idx]}	"
+		echo "${_item_mob_shield[$idx]}"
+	done > "$g_save_data_path/equipment.tab"
+
+	# Save inventory
+	for (( idx=0; idx < ${#_item_party_idx[@]}; idx++ )); do
+		echo -n "$idx	"
+		echo -n "${_item_party_idx[$idx]}	"
+		echo "${_item_party_amount[$idx]}"
+	done > "$g_save_data_path/inventory.tab"
+}
+
 # Load party data from save file
 function item_load_from_save
 {
@@ -246,6 +275,19 @@ function item_remove_equipment
 	
 	# Add the equipment back to inventory
 	item_add_to_inventory $item_idx
+	
+	# If we did not remove the None item, update character stats
+	if (( item_idx == 0 )); then
+		return 0
+	fi
+	case $2 in
+	H) (( _combat_mob_ac[$1] -= _item_param[$item_idx] )) ;;
+	B) (( _combat_mob_ac[$1] -= _item_param[$item_idx] )) ;;
+	S) (( _combat_mob_ac[$1] -= _item_param[$item_idx] )) ;;
+	W) (( _combat_mob_dmg[$1] -= _item_param[$item_idx] )) ;;
+	A1) : ;;
+	A2) : ;;
+	esac
 }
 
 # Add equipment to a monster, but DOES NOT check requirements. This is handled
@@ -282,12 +324,24 @@ function item_equip_equipment
 		item_remove_equipment $1 W
 	fi
 	
-	# Place the new equipment in the right slot
+	# Place the new equipment in the right slot and update stats
 	case $2 in
-	H) _item_mob_head[$1]=$3 ;;
-	B) _item_mob_body[$1]=$3 ;;
-	S) _item_mob_shield[$1]=$3 ;;
-	W) _item_mob_weapon[$1]=$3 ;;
+	H)
+		_item_mob_head[$1]=$3
+		(( _combat_mob_ac[$1] += _item_param[$3] ))
+	;;
+	B)
+		_item_mob_body[$1]=$3
+		(( _combat_mob_ac[$1] += _item_param[$3] ))
+	;;
+	S)
+		_item_mob_shield[$1]=$3
+		(( _combat_mob_ac[$1] += _item_param[$3] ))
+	;;
+	W)
+		_item_mob_weapon[$1]=$3
+		(( _combat_mob_dmg[$1] += _item_param[$3] ))
+	;;
 	A1) _item_mob_accessory1[$1]=$3 ;;
 	A2) _item_mob_accessory2[$1]=$3 ;;
 	esac
@@ -332,6 +386,9 @@ function item_use_item
 # $4	Maximum amount of damage to heal
 function item_proc_pot_heal
 {
+	animation_single ${_combat_mob_pos_x[$2]} ${_combat_mob_pos_y[$2]} \
+		${_combat_mob_tile[$2]} animation_proc_random_chars $COLOR_GREEN \
+		$COLOR_BLUE 20
 	combat_take_damage $2 $(( ( (RANDOM % ($4 - $3) + 1) + $3 ) * -1 ))
 }
 

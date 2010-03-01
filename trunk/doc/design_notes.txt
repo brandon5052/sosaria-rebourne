@@ -29,3 +29,35 @@ while number_to_spawn > number_in_party * 2 or number_to_spawn < number_in_party
 	number_to_spawn = rand(16)
 spawn_leader = rand(8) == 1
 followers_to_spawn=
+
+
+
+
+
+Character Progression
+
+LVL	P	S	T
+1	12	10	8
+2	13	10	8
+3	13	11	8
+4	14	11	8
+5	14	11	9
+6	15	11	9
+7	15	12	9
+8	16	12	9
+9	16	12	10
+10	17	12	10
+11	17	13	10
+12	18	13	10
+13	18	13	11
+14	19	13	11
+15	19	14	11
+16	20	14	11
+
+Equipment Requirements
+Primary Class Equipment		12
+Primary Class Advanced		15
+Primary Class Ultimate		18-20
+Secondary Class Required	11
+Secondary Class Restricted	13
+Third Class Restricted		9,11

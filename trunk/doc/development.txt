@@ -20,6 +20,15 @@ Systems to Implement
   + Ranged attack
   + Projectile animation
   * Ranged AI
+* Data
+  + Add armor
+  * Add weapons
+  * Add accessories
+  * Add consumables
+  * Add monsters
+  * Add base tile set
+  * Add combat maps for base tile set
+  * Add maps
 * Magic
 * World Map / Area Map
 * Dialog
@@ -27,14 +36,14 @@ Systems to Implement
 * 3D Dungeons ???
 
 Issues to Resolve
-* Make equiping and unequiping items update stats.
++ Make equiping and unequiping items update stats.
 * Randomly select starting position for monsters.
 * Include follower and leader spawns.
 * In party member selection UI disable party members that are out of bounds.
+* Display AC and DMG in inventory UI when selecting H, B, S or W types.
+* Rework targeting handler to support location-based target type and ranges.
 
 Changes
-Added defeat condition to combat_mode
-Added victory condition to combat_mode
-Removed articles from item names in inventory and equipment UIs
-Added experiance awards at end of battle
-Added leveling up handler
+Added full range of armor
+Added party, equipment and inventory saving support
+Equiping and unequiping items now updates stats

@@ -229,8 +229,14 @@ function load_last_save
 	return 1
 }
 
+# Calls all save routines for the current save.
+function save_game
+{
+	combat_save
+}
+
 # Debug proceedure. Put whatever you need to test here.
 function debug_proc
 {
-	item_equip_equipment 17 H 1
+	save_game
 }

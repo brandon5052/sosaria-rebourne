@@ -126,6 +126,36 @@ function combat_init
 	done < "$g_static_data_path/levels.tab"
 }
 
+# Save party data to the current save
+function combat_save
+{
+	local idx
+	
+	for (( idx=_combat_num_mobs; \
+		idx < _combat_num_mobs + _combat_num_chars; \
+		idx++ )); do
+		# Skip empty slots
+		if [ -z "${_combat_mob_name[$idx]}" ]; then
+			continue
+		fi
+		echo -n "$((idx - _combat_num_mobs))	"
+		echo -n "${_combat_mob_name[$idx]// /_}	"
+		echo -n "${_combat_mob_tile[$idx]}	"
+		echo -n "${_combat_mob_exp[$idx]}	"
+		echo -n "${_combat_mob_level[$idx]}	"
+		echo -n "${_combat_mob_str[$idx]}	"
+		echo -n "${_combat_mob_dex[$idx]}	"
+		echo -n "${_combat_mob_int[$idx]}	"
+		echo -n "${_combat_mob_dmg[$idx]}	"
+		echo -n "${_combat_mob_ac[$idx]}	"
+		echo -n "${_combat_mob_hp[$idx]}	"
+		echo -n "${_combat_mob_hpmax[$idx]}	"
+		echo -n "${_combat_mob_mp[$idx]}	"
+		echo -n "${_combat_mob_mpmax[$idx]}	"
+		echo "${_combat_mob_class[$idx]}"
+	done > "$g_save_data_path/party.tab"
+}
+
 # Load party data from the current save
 function combat_load_from_save
 {
@@ -924,10 +954,11 @@ function combat_attack
 	fi
 	
 	# If we get here we need to do damage
-	damage_mod=$(( RANDOM % ( _combat_mob_dmg[$1] / 4 + 1 ) ))
-	(( effective_damage = _combat_mob_dmg[$1] - damage_mod ))
+	(( effective_damage = _combat_mob_dmg[$1] ))
 	(( effective_damage += _combat_mob_str[$1] / 2 ))
 	(( effective_damage -= _combat_mob_str[$damaged_mob] / 4 ))
+	damage_mod=$(( RANDOM % ( effective_damage / 2 + 1 ) ))
+	(( effective_damage -= damage_mod ))
 	if (( effective_damage < 1 )); then
 		effective_damage=1
 	fi

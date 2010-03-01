@@ -615,8 +615,8 @@ function ui_equip_change
 		while :; do
 			input_get_key
 			case $g_return in
-			j|J|UP) equip_slot_dir="-1"; break ;;
-			k|K|DOWN) equip_slot_dir=1; break ;;
+			k|K|UP) equip_slot_dir="-1"; break ;;
+			j|J|DOWN) equip_slot_dir=1; break ;;
 			a|A|ENTER)
 				if ui_inventory $equip_type_code $1 "Y"; then
 					if item_equip_equipment $1 $slot_code $g_return; then

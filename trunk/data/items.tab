@@ -39,21 +39,64 @@
 #
 #
 #	Name					STR	DEX	INT	TYP	AC
-1	a_Chainmail_Coif		10	5	0	H	2
+1	a_Padded_Helm			8	8	0	H	1
+2	a_Leather_Helm			10	10	0	H	2
+3	a_Chainmail_Coif		12	11	0	H	3
+4	the_Inquisitor's_Hat	10	11	18	H	3
+5	a_Platemail_Helm		14	12	0	H	4
+6	the_Dragon_Scale_Helm	18	13	0	H	5
 #
 #
-# Body Armor
+# Strenth-Based Armor
 #
 #
 #	Name					STR	DEX	INT	TYP	AC
-64	Chainmail				12	7	0	B	5
+64	a_Robe					8	8	0	B	3
+67	a_Woolen_Robe			9	8	0	B	5
+68	_Cloth_Armor				10	9	0	B	6
+70	_Padded_Armor			11	9	0	B	7
+71	_Leather_Armor			12	10	0	B	8
+72	Studded_Leather_Armor	13	10	0	B	9
+76	Ringmail_Armor			14	11	0	B	11
+78	Chainmail_Armor			15	11	0	B	12
+80	Scalemail_Armor			16	12	0	B	13
+81	Platemail_Armor			17	12	0	B	14
+83	Dragon_Scale_Armor		19	14	0	B	16
+84	Dragon_Plate_Armor		20	14	0	B	18
+#
+#
+# Dexderity-Based Armor
+#
+#
+#	Name					STR	DEX	INT	TYP	AC
+65	a_Silk_Combat_Suit		9	11	0	B	4
+66	a_Padded_Silk_Gi		9	12	0	B	4
+69	a_Leather_Padded_Gi		11	14	7	B	7
+74	a_Scale_Plated_Gi		11	16	7	B	10
+79	a_Spiked_Combat_Suit	13	18	9	B	12
+82	the_Shadow_Silk_Gi		14	20	0	B	14
+#
+#
+# Int-Based Armor
+#
+#
+#	Name					STR	DEX	INT	TYP	AC
+73	Sage_Robes				5	5	16	B	9
+75	the_Moonsilk_Robes		6	6	18	B	10
+77	Nystul's_Robes			7	7	20	B	11
 #
 #
 # Shields
 #
 #
 #	Name					STR	DEX	INT	TYP	AC
-128	a_Wooden_Shield			10	8	0	S	2
+128	a_Wooden_Shield			11	8	0	S	1
+129	a_Round_Shield			12	8	0	S	2
+130	a_Kite_Shield			14	9	0	S	3
+131	Forearm_Plates			13	13	0	S	3
+132	a_Tower_Shield			16	10	0	S	4
+133	the_Defender			13	18	0	S	4
+134	the_Dragon_Scale_Shield	18	13	0	S	5
 #
 #
 # Melee Weapons
@@ -96,8 +139,8 @@
 #
 # Healing Potions
 #	Name					STR	DEX	INT	TYP	Proc							TGT	Min	Max
-512	a_Minor_Healing_Potion	0	0	4	C	item_proc_pot_heal				P	20	30
-513	a_Healing_Potion		0	0	7	C	item_proc_pot_heal				P	50	75
+512	a_Minor_Healing_Potion	0	0	8	C	item_proc_pot_heal				P	20	30
+513	a_Healing_Potion		0	0	10	C	item_proc_pot_heal				P	50	75
 514	a_Major_Healing_Potion	0	0	14	C	item_proc_pot_heal				P	500	500
 # Status Curing Potions
 #	Name					STR	DEX	INT	TYP	Proc							TGT
