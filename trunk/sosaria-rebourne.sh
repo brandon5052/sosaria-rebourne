@@ -61,7 +61,7 @@ vt100_home
 
 # Test combat loop
 while :; do
-	combat_mode trees 3
+	combat_mode trees 0
 	# Party has died, reload
 	if [ "$g_return" = "D" ]; then
 		log_write "Re-loading party from save."

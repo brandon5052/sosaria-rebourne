@@ -53,7 +53,7 @@ function input_get_key
 
 	# Read the character and convert to a code number
 	IFS= read -rsn 1 buffer
-	code=$(printf "%d\n" "'$buffer")
+	printf -v code "%d" "'$buffer"
 
 	case $code in
 	0) g_return="ENTER" ;;
@@ -62,7 +62,7 @@ function input_get_key
 	27)
 		if read -rsn 1 -t $_input_nonblocking_read_timeout \
 			buffer; then
-			code=$(printf "%d\n" "'$buffer")
+			printf -v code "%d" "'$buffer"
 		# Single escape with pause
 		else
 			g_return="ESCAPE"
@@ -76,7 +76,7 @@ function input_get_key
 		91)
 			if read -rsn 1 -t $_input_nonblocking_read_timeout \
 				buffer; then
-				code=$(printf "%d\n" "'$buffer")
+				printf -v code "%d" "'$buffer"
 			# Something bad happened here
 			else
 				g_return="ERROR"

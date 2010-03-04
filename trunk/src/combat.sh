@@ -33,7 +33,7 @@ declare -r _combat_map_width=11
 declare -r _combat_map_height=11
 declare -r _combat_map_path="$g_static_data_path/maps/combat"
 declare -r _combat_num_mobs=16
-declare -r _combat_num_chars=8
+declare -r _combat_num_chars=6
 declare -r _combat_group_spawn_chance=75
 declare -r _combat_highlight_color=$COLOR_BLUE
 declare -r _combat_target_highlight_color=$COLOR_RED
@@ -51,6 +51,7 @@ declare -r _combat_ranged_sleep=2
 declare -a _combat_map_tile
 declare -a _combat_map_starting_location_x
 declare -a _combat_map_starting_location_y
+declare -a _combat_map_starting_location_occupied
 
 # Monster static data
 declare -a _combat_monster_tab
@@ -201,15 +202,22 @@ function combat_load_from_save
 # $1	Index of the monster to load a group for
 function combat_load_group
 {
-	local idx to_spawn out_idx=0
+	local idx to_spawn primary followers leaders out_idx=0
+	local primary_idx follower_idx leader_idx
 	
 	# Null out all of the monsters
 	for (( idx=0; idx < _combat_num_mobs; idx++ )); do
 		_combat_mob_name[$idx]=
 		_combat_mob_pos_x[$idx]=-1
 		_combat_mob_target[$idx]=-1
+		_combat_map_starting_location_occupied[$idx]=0
 	done
-
+	
+	# Bind monster indicies
+	primary_idx=$1
+	follower_idx=${_combat_monster_follower[$primary_idx]}
+	leader_idx=${_combat_monster_leader[$primary_idx]}
+	
 	# Determine total number to spawn
 	(( to_spawn = RANDOM % 16 + 1 ))
 	while (( to_spawn > _combat_num_party * 2 || \
@@ -217,14 +225,53 @@ function combat_load_group
 		(( to_spawn = RANDOM % 16 + 1 ))
 	done
 	
-	# TODO - Leader spawn
+	# Leader amount, 1/8 chance to spawn the leader
+	if (( RANDOM % 8 == 0 )); then
+		leaders=1
+		# Solve the "only spawn a leader" case.
+		if (( to_spawn == 1 )); then
+			to_spawn=2
+		fi
+	else
+		leaders=0
+	fi
 	
-	# TODO - Follower spawn
+	# Follower amount, between 25% and 50% followers
+	(( followers = RANDOM % (to_spawn / 4) + (to_spawn / 4 + 1) ))
 	
-	# Spawn base monster
-	for (( idx=0; idx < to_spawn; idx++ )); do
-		combat_spawn_monster $1 $out_idx
+	# Primary amount is total minus followers and leaders
+	(( primary = (to_spawn - followers) - leaders ))
+	
+	# Spawn monsters
+	for (( idx=0; idx < primary; idx++ )); do
+		combat_spawn_monster $primary_idx $out_idx
 		(( out_idx++ ))
+	done
+	for (( idx=0; idx < followers; idx++ )); do
+		combat_spawn_monster $follower_idx $out_idx
+		(( out_idx++ ))
+	done
+	for (( idx=0; idx < leaders; idx++ )); do
+		combat_spawn_monster $leader_idx $out_idx
+		(( out_idx++ ))
+	done
+}
+
+# Randomly position a monster in a starting location
+#
+# $1	The index of the monster to position
+function combat_randomly_place_monster
+{
+	local idx
+	
+	while :; do
+		(( idx = RANDOM % _combat_num_mobs ))
+		if (( _combat_map_starting_location_occupied[$idx] == 0 )); then
+			_combat_map_starting_location_occupied[$idx]=1
+			_combat_mob_pos_x[$1]=${_combat_map_starting_location_x[$idx]}
+			_combat_mob_pos_y[$1]=${_combat_map_starting_location_y[$idx]}
+			break
+		fi
 	done
 }
 
@@ -258,8 +305,7 @@ function combat_spawn_monster
 	_combat_mob_rbg[$2]=${tab[14]}
 	_combat_mob_rfg[$2]=${tab[15]}
 	_combat_mob_class[$2]=X
-	_combat_mob_pos_x[$2]=${_combat_map_starting_location_x[$2]}
-	_combat_mob_pos_y[$2]=${_combat_map_starting_location_y[$2]}
+	combat_randomly_place_monster $2
 }
 
 # Load a combat map from disk
@@ -303,7 +349,7 @@ function combat_compile_map
 			fi
 			continue
 		fi
-		symbol_dec=$(printf '%d' "'$buffer")
+		printf -v symbol_dec '%d' "'$buffer"
 		tile_map[$out_idx]=${tiles_symbol_xref[$symbol_dec]}
 		(( out_idx++ ))
 	done
@@ -1089,6 +1135,9 @@ function combat_player_use_item
 # $1	The monster index of the player
 function combat_do_player_round
 {
+	# Render the roster with our player highlighted
+	ui_render_roster $1
+	
 	while :; do
 		# Highlight the player character
 		combat_render_mob $1 $_combat_highlight_color
@@ -1113,12 +1162,14 @@ function combat_do_player_round
 		# Z-Stats
 		z|Z)
 			ui_zstats
+			ui_render_roster $1
 			# Prevent this from costing us a round
 			false
 		;;
 		# Inventory
 		i|I)
-			ui_inventory "X" 17
+			ui_inventory "X"
+			ui_render_roster $1
 			# Prevent this from costing us a round
 			false
 		;;

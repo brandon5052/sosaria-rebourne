@@ -40,13 +40,14 @@ function tiles_init
 	echo "Loading images"
 	while read image_file symbol index combat_map_name; do
 		if [ "$symbol" != "-" ]; then
-			symbol_dec=$(printf '%d' "'$symbol")
+			printf -v symbol_dec '%d' "'$symbol"
 			_tiles_symbol[$index]=$symbol
 			tiles_symbol_xref[$symbol_dec]=$index
 		fi
 		if [ "$combat_map_name" != "-" ]; then
 			_tiles_combat_map_name[$index]=$combat_map_name
 		fi
+		# TODO - May need to refactor the subshell out of this for performance
 		_tiles_cache[$index]="$(vt100img_render $_tiles_path/$image_file.vt100)"
 	done < $_tiles_tab_path
 }

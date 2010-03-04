@@ -32,8 +32,9 @@ declare -r _ui_inventory_fg=$COLOR_WHITE
 declare -r _ui_inventory_bg=$COLOR_BLACK
 declare -r _ui_inventory_hlfg=$COLOR_WHITE
 declare -r _ui_inventory_hlbg=$COLOR_BLUE
-declare -r _ui_inventory_dsfg=$COLOR_BLACK
-declare -r _ui_inventory_dsbg=$COLOR_BLACK
+declare -r _ui_inventory_disabled=$COLOR_RED
+declare -r _ui_inventory_below=$COLOR_YELLOW
+declare -r _ui_inventory_above=$COLOR_GREEN
 
 # Park the cursor
 function ui_park_cursor
@@ -114,6 +115,7 @@ function ui_render_roster
 		selection=$1
 	fi
 	
+	# Party roster
 	vt100_high
 	for (( idx=_combat_num_mobs; \
 		idx < _combat_num_mobs + _combat_num_chars; idx++ )); do
@@ -130,13 +132,28 @@ function ui_render_roster
 		vt100_goto $_ui_roster_x \
 			$(( _ui_roster_y + ( idx - _combat_num_mobs ) ))
 		if [ -n "${_combat_mob_name[$idx]}" ]; then
-			printf "%-16s " "${_combat_mob_name[$idx]}"
+			printf "%-16s HP: " "${_combat_mob_name[$idx]}"
 			vt100_fg $COLOR_YELLOW
 			printf "%3d " ${_combat_mob_hp[$idx]}
+			vt100_fg $COLOR_WHITE
+			echo -n "MP: "
 			vt100_fg $COLOR_TEAL
 			printf "%3d" ${_combat_mob_mp[$idx]}
 		fi
 	done
+	
+	# Party status
+	vt100_bg $_ui_inventory_bg
+	vt100_goto $_ui_roster_x $(( _ui_roster_y + _combat_num_chars ))
+	vt100_fg $_ui_inventory_fg;	echo -n "Gold: "
+	vt100_fg $COLOR_YELLOW;		printf "%-7d" 5000
+	vt100_fg $_ui_inventory_fg;	echo -n "Food:  "
+	vt100_fg $COLOR_GREEN;		printf "%-5d" 49
+	vt100_fg $_ui_inventory_fg;	echo -n "Torches: "
+	vt100_fg $COLOR_RED;		printf "%-3d " 17
+	vt100_fg $_ui_inventory_fg
+	vt100_goto $_ui_roster_x $(( _ui_roster_y + _combat_num_chars + 1 ))
+	printf "Date: %02d/%02d/%04d Time: %02d:%02d Moon: [%s] " 2 7 4094 3 45 "()"
 }
 
 # Select a party member from the roster. The selected party member's monster
@@ -212,13 +229,13 @@ function ui_display_status
 	vt100_high
 	vt100_fg $COLOR_WHITE
 	vt100_goto $_ui_roster_x $(( _ui_roster_y + 0 )); printf "%-16s  Level %2d  %-12s" "${_combat_mob_name[$mob_idx]}" ${_combat_mob_level[$mob_idx]} $g_return
-	vt100_goto $_ui_roster_x $(( _ui_roster_y + 1 )); printf "Strength      %-2d            HP: %3d/%-3d " ${_combat_mob_str[$mob_idx]} ${_combat_mob_hp[$mob_idx]} ${_combat_mob_hpmax[$mob_idx]}
-	vt100_goto $_ui_roster_x $(( _ui_roster_y + 2 )); printf "Dexderity     %-2d            MP: %3d/%-3d " ${_combat_mob_dex[$mob_idx]} ${_combat_mob_mp[$mob_idx]} ${_combat_mob_mpmax[$mob_idx]}
-	vt100_goto $_ui_roster_x $(( _ui_roster_y + 3 )); printf "Intelligence  %-2d                        " ${_combat_mob_int[$mob_idx]}
-	vt100_goto $_ui_roster_x $(( _ui_roster_y + 4 )); printf "Armor Class   %-2d            Gold 100000 " ${_combat_mob_ac[$mob_idx]}
-	vt100_goto $_ui_roster_x $(( _ui_roster_y + 5 )); printf "Base Damage   %-2d            Food 100000 " ${_combat_mob_dmg[$mob_idx]}
-	vt100_goto $_ui_roster_x $(( _ui_roster_y + 6 )); printf "Experiance    %-6d                    " ${_combat_mob_exp[$mob_idx]}
-	vt100_goto $_ui_roster_x $(( _ui_roster_y + 7 )); printf "Next Level    %-6s                    " "$next_exp"
+	vt100_goto $_ui_roster_x $(( _ui_roster_y + 1 )); echo -n "$_log_blank_line"
+	vt100_goto $_ui_roster_x $(( _ui_roster_y + 2 )); printf "Strength     %-2d             HP: %3d/%-3d " ${_combat_mob_str[$mob_idx]} ${_combat_mob_hp[$mob_idx]} ${_combat_mob_hpmax[$mob_idx]}
+	vt100_goto $_ui_roster_x $(( _ui_roster_y + 3 )); printf "Dexderity    %-2d             MP: %3d/%-3d " ${_combat_mob_dex[$mob_idx]} ${_combat_mob_mp[$mob_idx]} ${_combat_mob_mpmax[$mob_idx]}
+	vt100_goto $_ui_roster_x $(( _ui_roster_y + 4 )); printf "Intelligence %-2d                         " ${_combat_mob_int[$mob_idx]}
+	vt100_goto $_ui_roster_x $(( _ui_roster_y + 5 )); printf "Armor Class  %-2d             Gold 100000 " ${_combat_mob_ac[$mob_idx]}
+	vt100_goto $_ui_roster_x $(( _ui_roster_y + 6 )); printf "Base Damage  %-2d             Food 100000 " ${_combat_mob_dmg[$mob_idx]}
+	vt100_goto $_ui_roster_x $(( _ui_roster_y + 7 )); printf "Experiance   %-6d Next Level   %-6s" ${_combat_mob_exp[$mob_idx]} "$next_exp"
 }
 
 # Display the equipment of a monster
@@ -342,7 +359,8 @@ function ui_zstats
 # $2	If this is present, allow selection, but only for items that this
 #		monster index can use.
 # $3	If this is present, insert a "None" item at the top of the list.
-# $4	If this is present this is the initially selected index
+# $4	If this is present this is the initially selected index.
+# $5	If this is present this is the number to compare item params to.
 # Returns non-zero unless a selection is requested and made.
 function ui_inventory
 {
@@ -501,7 +519,6 @@ function ui_inventory
 			vt100_high
 			vt100_goto $_ui_roster_x $(( _ui_roster_y + yofs ))
 			item_idx=${list_item_idx[$idx]}
-			item_get_type_string ${_item_type[$item_idx]}
 			# Past end of list
 			if (( idx >= ${#list_item_idx[@]} )); then
 				vt100_fg $_ui_inventory_fg
@@ -511,25 +528,33 @@ function ui_inventory
 				# Selected item
 				if (( selection == idx )); then
 					vt100_bg $_ui_inventory_hlbg
-					if (( enabled[$idx] != 1 )); then
-						vt100_fg $_ui_inventory_dsfg
-					else
-						vt100_fg $_ui_inventory_hlfg
-					fi
+				else
+					vt100_bg $_ui_inventory_bg
+				fi
+				
 				# Disabled item
-				elif (( enabled[$idx] != 1 )); then
-					vt100_fg $_ui_inventory_dsfg
-					vt100_bg $_ui_inventory_dsbg
+				if (( enabled[$idx] != 1 )); then
+					vt100_fg $_ui_inventory_disabled
 				# Enabled item
 				else
-					vt100_fg $_ui_inventory_fg
-					vt100_bg $_ui_inventory_bg
+					if [ -n "$5" ]; then
+						if (( $5 < _item_param[$item_idx] )); then
+							vt100_fg $_ui_inventory_above
+						elif (( $5 > _item_param[$item_idx] )); then
+							vt100_fg $_ui_inventory_below
+						else
+							vt100_fg $_ui_inventory_fg
+						fi
+					else
+						vt100_fg $_ui_inventory_fg
+					fi
 				fi
 				
 				# Print item line
 				if (( item_idx == 0 )); then
 					printf "    %-24s           " "${_item_name[$item_idx]#* }"
 				else
+					item_get_type_string $item_idx
 					printf "%3d %-24s %-10s" "${list_item_amount[$idx]}" \
 						"${_item_name[$item_idx]#* }" "$g_return"
 				fi
@@ -547,7 +572,7 @@ function ui_inventory
 				if ui_ask_yes_no "Drop ${_item_name[$item_idx]}?"; then
 					item_remove_from_inventory $item_idx
 				fi
-				ui_inventory "$1" "$2" "$3" "$selection"
+				ui_inventory "$1" "$2" "$3" "$selection" "$5"
 				return $?
 			;;
 			z|Z)
@@ -555,7 +580,7 @@ function ui_inventory
 				if ui_ask_yes_no "Drop EVERY ${_item_name[$item_idx]#* }?"; then
 					item_remove_from_inventory $item_idx 99999
 				fi
-				ui_inventory "$1" "$2" "$3" "$selection"
+				ui_inventory "$1" "$2" "$3" "$selection" "$5"
 				return $?
 			;;
 			a|A|ENTER)
@@ -583,7 +608,8 @@ function ui_inventory
 # Returns non-zero if an equipment change was not actually made
 function ui_equip_change
 {
-	local equip_slot=0 equip_type_code slot_code equip_slot_dir=0
+	local equip_slot=0 equip_type_code slot_code equip_slot_dir=0 amount
+	local item_index
 	
 	while :; do
 		# Apply slot delta
@@ -597,15 +623,46 @@ function ui_equip_change
 		fi
 		equip_slot_dir=0
 		
-		# Bind slot code
+		# Bind slot code and amounts
 		case $equip_slot in
-		0) equip_type_code="H"; slot_code="H" ;;
-		1) equip_type_code="B"; slot_code="B" ;;
-		2) equip_type_code="S"; slot_code="S" ;;
-		3) equip_type_code="W"; slot_code="W" ;;
-		4) equip_type_code="A"; slot_code="A1" ;;
-		5) equip_type_code="A"; slot_code="A2" ;;
+		0)
+			equip_type_code="H"
+			slot_code="H"
+			item_index=${_item_mob_head[$1]}
+		;;
+		1)
+			equip_type_code="B"
+			slot_code="B"
+			item_index=${_item_mob_body[$1]}
+		;;
+		2)
+			equip_type_code="S"
+			slot_code="S"
+			item_index=${_item_mob_sheild[$1]}
+		;;
+		3)
+			equip_type_code="W"
+			slot_code="W"
+			item_index=${_item_mob_weapon[$1]}
+		;;
+		4)
+			equip_type_code="A"
+			slot_code="A1"
+			item_index=-1
+		;;
+		5)
+			equip_type_code="A"
+			slot_code="A2"
+			item_index=-1
+		;;
 		esac
+		if (( item_index < 0 )); then
+			amount=
+		elif (( item_index == 0 )); then
+			amount=0
+		else
+			amount=${_item_param[$item_index]}
+		fi
 		
 		# Display
 		ui_display_equipment $1 $equip_slot
@@ -618,7 +675,7 @@ function ui_equip_change
 			k|K|UP) equip_slot_dir="-1"; break ;;
 			j|J|DOWN) equip_slot_dir=1; break ;;
 			a|A|ENTER)
-				if ui_inventory $equip_type_code $1 "Y"; then
+				if ui_inventory $equip_type_code $1 "Y" 0 "$amount"; then
 					if item_equip_equipment $1 $slot_code $g_return; then
 						if [ -n "$2" ]; then
 							return 0

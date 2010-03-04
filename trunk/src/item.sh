@@ -112,20 +112,24 @@ function item_load_from_save
 
 # Place the (short) type string for a given item type code into g_return.
 #
-# $1	The item type code
+# $1	The item number
 function item_get_type_string
 {
-	case "$1" in
-	A) g_return="Accessory" ;;
-	B) g_return="Body armor" ;;
-	C) g_return="Consumable" ;;
-	H) g_return="Helm" ;;
-	M) g_return="Weapon" ;;
-	m) g_return="2-H Weapon" ;;
-	R) g_return="Ranged" ;;
-	r) g_return="2-H Ranged" ;;
-	S) g_return="Shield" ;;
-	*) g_return="None" ;;
+	local typecode
+	
+	typecode=${_item_type[$1]}
+	
+	case "$typecode" in
+	A) printf -v g_return "Accessory" ;;
+	B) printf -v g_return "Armor   %2d" ${_item_param[$1]} ;;
+	C) printf -v g_return "Consumable" ;;
+	H) printf -v g_return "Helm    %2d" ${_item_param[$1]} ;;
+	M) printf -v g_return "Weapon  %2d" ${_item_param[$1]} ;;
+	m) printf -v g_return "2H-Weap %2d" ${_item_param[$1]} ;;
+	R) printf -v g_return "Ranged  %2d" ${_item_param[$1]} ;;
+	r) printf -v g_return "2H-Rang %2d" ${_item_param[$1]} ;;
+	S) printf -v g_return "Shield  %2d" ${_item_param[$1]} ;;
+	*) printf -v g_return "None" ;;
 	esac
 }
 

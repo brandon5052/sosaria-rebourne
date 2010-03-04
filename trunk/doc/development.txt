@@ -36,16 +36,16 @@ Systems to Implement
 * 3D Dungeons ???
 
 Issues to Resolve
-* Randomly select starting position for monsters.
-* Include follower and leader spawns.
-* In party member selection UI disable party members that are out of bounds.
-* Display AC and DMG in inventory UI when selecting H, B, S or W types.
+* Implement Powder Keg item.
+* Make gold, food, torches display in party roster work.
+* Make date, time and moon phase display in party roster work.
 
 Changes
-Reworked targeting handler to support location-based target type and ranges
-Added data for weapon ranges and weapon projectiles
-Tweeked hills tile, added water and deep water tiles
-Added pure ranged AI, changed combat_attack and combat_find_closest_target
-Added Close with Optional Ranged AI
-Added data for item and monster ranges and projectiles
-Added Skeletal Archer and Troll monsters, will likely revamp all monsters soon
+Added follower and leader spawns to combat group spawning.
+Starting positions for monsters in combat are now randomly selected.
+Factored out command substitution from non-init code. Image and combat map compilation times drastically decreased.
+Added AC / DMG display to item type strings.
+Added optional coloration of items based on a comparison of item parameter to a numeric value, used for showing if equipment is better or worse than current in inventory UI.
+During a player turn the player's name is highlighted on the roster.
+Refactored config variables and UI for a max party of six. This is really just a personal preference thing. I played U4 and U5, and decided I liked six-member parties better than eight.
+Rearranged player status ui.

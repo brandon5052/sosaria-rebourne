@@ -39,8 +39,7 @@ if (( BASH_VERSINFO[0] >= 4 )); then
 	function jiffy_sleep
 	{
 		local ms=$(( $1 ))
-		local sleep_format=$(printf "%d.%03d" $(( ms / 1000 )) \
-			$(( ms % 1000 )) )
+		printf -v sleep_format "%d.%03d" $(( ms / 1000 )) $(( ms % 1000 ))
 		IFS= read -st $sleep_format buffer
 	}
 # Otherwise use the system sleep function
@@ -83,8 +82,7 @@ elif type sleep >/dev/null 2>&1; then
 				sleep 0
 			fi
 			
-			local sleep_format=$(printf "%d.%03d" $(( ms / 1000 )) \
-				$(( ms % 1000 )) )
+			printf -v sleep_format "%d.%03d" $(( ms / 1000 )) $(( ms % 1000 ))
 			sleep "$sleep_format"
 		}
 	else
@@ -163,13 +161,13 @@ function uppercase_first_character
 {
 	local first="${1:0:1}"
 	local rest="${1:1}"
-	local first_code=$(printf "%d" "'$first")
+	printf -v first_code "%d" "'$first"
 	local octal_code
 	if (( first_code >= 97 && first_code <= 122 )); then
 		(( first_code -= 32 ))
 	fi
-	octal_code=$(printf "%o" $first_code)
-	first=$(printf "\\$octal_code")
+	printf -v "%o" $first_code
+	printf -v first "\\$octal_code"
 	g_return="$first$rest"
 }
 
@@ -217,7 +215,7 @@ function load_last_save
 {
 	local dirname
 	
-	for dirname in `ls -drt $g_dynamic_data_path/* 2>/dev/null`; do
+	for dirname in $(ls -drt $g_dynamic_data_path/* 2>/dev/null); do
 		if [ -d "$dirname" ]; then
 			g_save_data_path="$dirname"
 			combat_load_from_save
