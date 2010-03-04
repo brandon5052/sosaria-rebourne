@@ -15,11 +15,18 @@
 #	HP		Hit points (starting and max)
 #	MP		Magic points (starting and max)
 #	ATK		Attack type
+#	RDG		Ranged damage
+#	RNG		Ranged attack range
+#	RCH		Ranged character
+#	RBG		Ranged background color
+#	RFG		Ranged foreground color
 #
 # Attack types (ATK Column)
 #	C	close
 #	R	ranged
 #	r	close/ranged
-#	F#	L#	Name					TILE	EXP	STR	DEX	INT	DMG	AC	HP	MP	ATK
-0	0	0	a_Mongbat				513		5	2	7	10	4	1	10	10	C
-1	0	0	a_Skeleton				512		10	6	6	0	4	3	15	0	C
+#	F#	L#	Name					TILE	EXP	STR	DEX	INT	DMG	AC	HP	MP	ATK	RDG	RNG	RCH	RBG	RFG
+0	0	0	a_Mongbat				513		5	2	7	10	4	1	10	10	C	0	0	-	k	k
+1	0	0	a_Skeleton				512		10	6	6	0	4	3	15	0	C	0	0	-	k	k
+2	0	0	a_Skeletal_Archer		514		15	10	13	8	0	6	20	16	R	7	5	I	k	w
+3	0	0	a_Troll					515		25	14	11	8	10	9	28	16	r	6	5	K	k	y

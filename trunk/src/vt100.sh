@@ -124,3 +124,21 @@ function vt100_home
 {
 	vt100_goto 0 0
 }
+
+# Convert a single-character color code into a color number. The color number
+# is placed in g_return.
+#
+# $1	The color code to convert
+function vt100_color_code_to_number
+{
+	case "$1" in
+		k)g_return=0;;
+		r)g_return=1;;
+		g)g_return=2;;
+		y)g_return=3;;
+		b)g_return=4;;
+		p)g_return=5;;
+		t)g_return=6;;
+		*)g_return=7;;
+	esac
+}

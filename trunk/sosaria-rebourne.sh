@@ -57,9 +57,11 @@ vt100_high
 vt100_clear
 vt100_home
 
+#tiles_debug_display; read; exit 0
+
 # Test combat loop
 while :; do
-	combat_mode trees 1
+	combat_mode trees 3
 	# Party has died, reload
 	if [ "$g_return" = "D" ]; then
 		log_write "Re-loading party from save."

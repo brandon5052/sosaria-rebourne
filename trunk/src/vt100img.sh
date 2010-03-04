@@ -81,17 +81,8 @@ function vt100img_render
 			if [ "$foreground" != "$last_foreground" ]; then
 				last_foreground="$foreground"
 				# Map the foreground color
-				case "$foreground" in
-					k)foreground=0;;
-					r)foreground=1;;
-					g)foreground=2;;
-					y)foreground=3;;
-					b)foreground=4;;
-					p)foreground=5;;
-					t)foreground=6;;
-					*)foreground=7;;
-				esac
-				vt100_fg "$foreground" >> "$1.bin"
+				vt100_color_code_to_number "$foreground"
+				vt100_fg "$g_return" >> "$1.bin"
 			fi
 			if [ "$character" = " " ]; then
 				echo -ne " " >> "$1.bin"

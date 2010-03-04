@@ -349,8 +349,36 @@ function item_equip_equipment
 	return 0
 }
 
+# Return the range of a weapon.
+#
+# $1	The item index of the weapon to check
+function item_get_weapon_range
+{
+	local -a ext
+	
+	ext=(${_item_ext[$1]})
+	g_return=${ext[0]}
+}
+
+# Return the ranged animation parameters for a weapon.
+#
+# $1	The item index of the weapon to check
+function item_get_weapon_ranged_anim_props
+{
+	local -a ext
+	local background foreground
+	
+	ext=(${_item_ext[$1]})
+	vt100_color_code_to_number "${ext[2]}"
+	background=$g_return
+	vt100_color_code_to_number "${ext[3]}"
+	foreground=$g_return
+	g_return="${ext[1]} $background $foreground"
+}
+
 # Return the target type for a given consumable item, which is placed in
-# g_return.
+# g_return. This is a target type suitable for combat_player_target_handler,
+# one of "monster", "player", "any" or "location"
 #
 # $1	The item index of the item to check
 function item_get_target_type
@@ -358,7 +386,13 @@ function item_get_target_type
 	local -a ext
 	
 	ext=(${_item_ext[$1]})
-	g_return=${ext[0]}
+	g_return=${ext[4]}
+	case $g_return in
+	P)g_return="player";;
+	M)g_return="monster";;
+	A)g_return="any";;
+	*)g_return="location";;
+	esac
 }
 
 # Use an item on a monster.
@@ -375,7 +409,7 @@ function item_use_item
 	fi
 	log_write "${_combat_mob_name[$2]} used ${_item_name[$1]} on ${_combat_mob_name[$3]}."
 	ext=(${_item_ext[$1]})
-	${_item_param[$1]} "$2" "$3" "${ext[1]}" "${ext[2]}" "${params[3]}"
+	${_item_param[$1]} "$2" "$3" "${ext[5]}" "${ext[6]}" "${ext[7]}"
 }
 
 # Healing potion proceedure

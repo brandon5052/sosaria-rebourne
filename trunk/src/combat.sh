@@ -74,6 +74,12 @@ declare -a _combat_mob_mpmax
 declare -a _combat_mob_pos_x
 declare -a _combat_mob_pos_y
 declare -a _combat_mob_atype
+declare -a _combat_mob_rdmg
+declare -a _combat_mob_rng
+declare -a _combat_mob_rchr
+declare -a _combat_mob_rbg
+declare -a _combat_mob_rfg
+
 declare -a _combat_target
 
 # Leveling data
@@ -246,6 +252,11 @@ function combat_spawn_monster
 	_combat_mob_mp[$2]=${tab[9]}
 	_combat_mob_mpmax[$2]=${tab[9]}
 	_combat_mob_atype[$2]=${tab[10]}
+	_combat_mob_rdmg[$2]=${tab[11]}
+	_combat_mob_rng[$2]=${tab[12]}
+	_combat_mob_rchr[$2]=${tab[13]}
+	_combat_mob_rbg[$2]=${tab[14]}
+	_combat_mob_rfg[$2]=${tab[15]}
 	_combat_mob_class[$2]=X
 	_combat_mob_pos_x[$2]=${_combat_map_starting_location_x[$2]}
 	_combat_mob_pos_y[$2]=${_combat_map_starting_location_y[$2]}
@@ -583,12 +594,20 @@ function combat_square_distance
 	fi
 }
 
-# Input handler for selecting a target. The targeted monster index will be
-# placed in g_return.
+# Input handler for selecting a target. The results are placed in the g_return
+# variable, which is treated as an array by this function.
+#
+# Return Set:
+# g_return[0]	For "monster", "player" and "any" target types, the monster
+#				index of the targeted monster. For the "location" target type
+#				this will be the monster index of the targeted monster or -1
+#				if no monster is at the target location.
+# g_return[1]	For the "location" target type, the x position of the target.
+# g_return[2]	For the "location" target type, the y position of the target.
 #
 # $1	The monster index of the player
-# $2	Target type, may be any of "ranged" or "close"
-# $3	Valid target set, may be any of "monster", "player" or "any"
+# $2	The range of targeting, must be positve, use 10 for unlimited.
+# $3	Target type, may be any of "monster", "player", "any" or "location"
 # Returns non-zero if the player cancels
 function combat_player_target_handler
 {
@@ -606,11 +625,9 @@ function combat_player_target_handler
 		last_target=$1
 	fi
 	# If the last target is out of range, default to the player
-	if [ "$2" = "close" ]; then
-		combat_square_distance $1 $last_target
-		if (( g_return > 1 )); then
-			last_target=$1
-		fi
+	combat_square_distance $1 $last_target
+	if (( g_return > $2 )); then
+		last_target=$1
 	fi
 	# If we have targeted a player for a "monster" target type, find a monster
 	if [ "$3" = "monster" ]; then
@@ -620,13 +637,26 @@ function combat_player_target_handler
 				if (( _combat_mob_pos_x[$idx] < 0 )); then
 					continue
 				fi
-				if [ "$2" = "close" ]; then
-					combat_square_distance $1 $idx
-					if (( g_return <= 1 )); then
-						last_target=$idx
-						break
-					fi
-				else
+				# Bound to range
+				combat_square_distance $1 $idx
+				if (( g_return <= $2 )); then
+					last_target=$idx
+					break
+				fi
+			done
+		fi
+	# If we have targeted a monster for a "player" target type, find a player
+	elif [ "$3" = "player" ]; then
+		if (( last_target < _combat_num_mobs )); then
+			for (( idx=_combat_num_mobs; \
+				idx < _combat_num_mobs + _combat_num_chars; idx++ )); do
+				# Ignore invalid targets
+				if (( _combat_mob_pos_x[$idx] < 0 )); then
+					continue
+				fi
+				# Bound to range
+				combat_square_distance $1 $idx
+				if (( g_return <= $2 )); then
 					last_target=$idx
 					break
 				fi
@@ -650,15 +680,16 @@ function combat_player_target_handler
 			next_y < 0 || next_y >= _combat_map_height )); then
 			next_x=$cur_x
 			next_y=$cur_y
-		# Close target type
-		elif [ "$2" = "close" ]; then
-			combat_square_distance $1 $next_x $next_y
-			# Target is not close, ignore
-			if (( g_return > 1 )); then
-				next_x=$cur_x
-				next_y=$cur_y
-			fi
 		fi
+		
+		# Out of range
+		combat_square_distance $1 $next_x $next_y
+		if (( g_return > $2 )); then
+			next_x=$cur_x
+			next_y=$cur_y
+		fi
+		
+		# Stepping
 		last_x=$cur_x
 		last_y=$cur_y
 		cur_x=$next_x
@@ -670,6 +701,14 @@ function combat_player_target_handler
 				$_combat_target_highlight_color
 			combat_render_position $last_x $last_y $COLOR_BLACK
 		fi
+		
+		# Player selection rendering
+		if combat_get_mob_at $cur_x $cur_y; then
+			# If we are not on a player this will not highlight anything
+			ui_render_roster $g_return
+		else
+			ui_render_roster
+		fi				
 		
 		# Inform line
 		if combat_get_mob_at $cur_x $cur_y; then
@@ -850,6 +889,12 @@ function combat_ranged_animation
 #
 # $1	The monster index of the attacking monster
 # $2	The monster index of the defending monster
+# $3	Character to use for ranged animations
+# $4	Background color number to use for ranged animations
+# $5	Foreground color number  to use for ranged animations
+# $6	Base damage override. If present this will be used as the base
+#		damage for the attack instead of the monster's base damage attribute.
+#		This is used by ranged AI attacks.
 function combat_attack
 {
 	local effective_ac to_hit hit_roll crit=0 damage_mod effective_damage
@@ -897,8 +942,7 @@ function combat_attack
 		
 		# Animation
 		combat_ranged_animation ${_combat_mob_pos_x[$1]} \
-			${_combat_mob_pos_y[$1]} $range_x $range_y "*" $COLOR_BLACK \
-			$COLOR_WHITE
+			${_combat_mob_pos_y[$1]} $range_x $range_y "$3" $4 $5
 		
 		# Miss display on target
 		if (( hit_roll == 1 || hit_roll < to_hit )); then
@@ -954,7 +998,11 @@ function combat_attack
 	fi
 	
 	# If we get here we need to do damage
-	(( effective_damage = _combat_mob_dmg[$1] ))
+	if [ -z "$6" ]; then
+		(( effective_damage = _combat_mob_dmg[$1] ))
+	else
+		(( effective_damage = $6 ))
+	fi
 	(( effective_damage += _combat_mob_str[$1] / 2 ))
 	(( effective_damage -= _combat_mob_str[$damaged_mob] / 4 ))
 	damage_mod=$(( RANDOM % ( effective_damage / 2 + 1 ) ))
@@ -976,23 +1024,21 @@ function combat_attack
 # $1	The monster index of the player
 function combat_player_attack_handler
 {
-	local target_type weapon_idx weapon_type
-	
-	# Determine target type
-	weapon_idx=${_item_mob_weapon[$1]}
-	weapon_type=${_item_type[$weapon_idx]}
-	if [ "$weapon_type" = "R" -o "$weapon_type" = "r" ]; then
-		target_type="ranged"
-	else
-		target_type="close"
-	fi
+	local weapon_idx weapon_range ranged_anim_props
+
+	# Get weapon information
+	item_get_weapon_range ${_item_mob_weapon[$1]}
+	weapon_range=$g_return
+	item_get_weapon_ranged_anim_props ${_item_mob_weapon[$1]}
+	ranged_anim_props=$g_return
 	
 	# Get the target
-	combat_player_target_handler $1 $target_type "monster"
+	combat_player_target_handler $1 $weapon_range "monster"
 	if [ $? -ne 0 ]; then return 1; fi
 	
 	# Do the attack
-	combat_attack $1 $g_return
+	# Note that ranged_anim_props expands into three parameters
+	combat_attack $1 $g_return $ranged_anim_props
 }
 
 # Input handler for using an item
@@ -1000,38 +1046,37 @@ function combat_player_attack_handler
 # $1	The monster index of the player
 function combat_player_use_item
 {
-	local item_idx target_idx
+	local item_idx target_idx range ranged_opts target_type
 
 	# If we cancel the item selection, cancel
 	if ! ui_inventory "C" $1; then
 		return 1
 	fi
 	item_idx=$g_return
-
-	# Get a target
+	
+	# Load item information
+	item_get_weapon_range $item_idx
+	range=$g_return
+	item_get_weapon_ranged_anim_props $item_idx
+	ranged_opts="$g_return"
 	item_get_target_type $item_idx
-	case $g_return in
-	P)
-		# If we cancel target selection, cancel
-		if ! ui_select_party_member; then
-			return 1
-		fi
-		target_idx=$g_return
-	;;
-	M)
-		# If we cancel target selection, cancel
-		if ! combat_player_target_handler $1 "ranged" "monster"; then
-			return 1
-		fi
-		target_idx=$g_return
-	;;
-	*) return 1 ;;
-	esac
-
+	target_type=$g_return
+	
+	# Get a target
+	if ! combat_player_target_handler $1 $range $target_type; then
+		return 1
+	fi
+	
+	# TODO - Handle location target type
+	
+	# Handle targeted items
+	target_idx=$g_return
+	
 	# Ranged animation
+	# Note that $ranged_opts splits into three parameters
 	combat_ranged_animation ${_combat_mob_pos_x[$1]} ${_combat_mob_pos_y[$1]} \
 		${_combat_mob_pos_x[$target_idx]} ${_combat_mob_pos_y[$target_idx]} \
-		"*" $COLOR_RED $COLOR_BLACK
+		$ranged_opts
 
 	# Use the item
 	item_use_item $item_idx $1 $target_idx
@@ -1098,10 +1143,17 @@ function combat_do_player_round
 # This function only looks at player monsters as targets.
 #
 # $1	The monster index of the center monster
-# Returns non-zero if the closest monster is not "close".
+# $2	The range, defaults to 1
+# Returns non-zero if the closest monster is not in range.
 function combat_find_closest_target
 {
-	local target=-1 target_square=100 idx
+	local target=-1 target_square=100 idx range
+	
+	if [ -z "$2" ]; then
+		range=1
+	else
+		range=$2
+	fi
 	
 	for (( idx=_combat_num_mobs; idx < _combat_num_mobs + _combat_num_chars; \
 		idx++ )); do
@@ -1121,7 +1173,7 @@ function combat_find_closest_target
 	
 	g_return=$target
 	# Return true if the target is "close"
-	if (( target_square <= 1 )); then
+	if (( target_square <= range )); then
 		return 0
 	fi
 	return 1
@@ -1206,14 +1258,28 @@ function combat_move_towards
 # $1	The monster index of the monster
 function combat_do_monster_round
 {
-	local target atype
-	
-	# Current target validation
+	local target atype rdmg rrng rch rbg rfg
+
+	# Variable binding
 	target=${_combat_mob_target[$1]}
 	atype=${_combat_mob_atype[$1]}
+	rdmg=${_combat_mob_rdmg[$1]}
+	rrng=${_combat_mob_rng[$1]}
+	rch=${_combat_mob_rchr[$1]}
+	rbg=${_combat_mob_rbg[$1]}
+	rfg=${_combat_mob_rfg[$1]}
+
+	# Current target validation
 	if (( target >= 0 )); then
 		if [ -z "${_combat_mob_name[$target]}" -o \
 			${_combat_mob_pos_x[$target]} -lt 0 ]; then
+			target="-1"
+		fi
+	fi
+	
+	# For pure ranged attack types we have a 20% chance of target switching
+	if [ "$atype" = "R" ]; then
+		if (( RANDOM % 5 == 0 )); then
 			target="-1"
 		fi
 	fi
@@ -1225,14 +1291,14 @@ function combat_do_monster_round
 			# If the target is still close, attack
 			combat_square_distance $1 $target
 			if (( g_return <= 1 )); then
-				combat_attack $1 $target
+				combat_attack $1 $target $rch $rbg $rfg
 			# Otherwise we either start attacking another close target or
 			# follow our previous target. 50% chance.
 			else
 				if combat_find_closest_target $1; then
 					if (( RANDOM % 2 == 1 )); then
 						_combat_mob_target[$1]=$g_return
-						combat_attack $1 $g_return
+						combat_attack $1 $g_return $rch $rbg $rfg
 					else
 						combat_move_towards $1 $target
 					fi
@@ -1240,23 +1306,35 @@ function combat_do_monster_round
 					combat_move_towards $1 $target
 				fi
 			fi
-		# TODO - Close / Ranged attack type
+		# WORKING - Close / Ranged attack type
 		elif [ "$atype" = "r" ]; then
-			# If target is close
-				# Attack
-			# Else if find_closest_target && rand(3)
-				# Attack
-			# Else
-				# Follow last target
-			:
-		# TODO - Ranged attack type
+			# If we are still close to our target, attack
+			combat_square_distance $1 $target
+			if (( g_return <= 1 )); then
+				combat_attack $1 $target $rch $rbg $rfg
+			# Otherwise if there is a target in range, then I have a 33%
+			# chance to target switch.
+			elif combat_find_closest_target $1 $rrng; then
+				if (( RANDOM % 3 == 0 )); then
+					_combat_mob_target[$1]=$g_return
+					combat_attack $1 $target $rch $rbg $rfg $rdmg
+				# Otherwise follow our last target
+				else
+					combat_move_towards $1 $target
+				fi
+			# Otherwise follow our last target
+			else
+				combat_move_towards $1 $target
+			fi
+		# Ranged attack type
 		else
-			# If rand(5)
-				# find_closest_target
-				# Attack
-			# Else
-				# Attack target
-			:
+			# Target range check
+			combat_square_distance $1 $target
+			if (( g_return  < $rrng )); then
+				combat_attack $1 $target $rch $rbg $rfg $rdmg
+			else
+				combat_move_towards $1 $target
+			fi
 		fi
 	# Looking for a new target
 	else
@@ -1265,29 +1343,50 @@ function combat_do_monster_round
 			# If there is a target in range, attack it
 			if combat_find_closest_target $1; then
 				_combat_mob_target[$1]=$g_return
-				combat_attack $1 $g_return
+				combat_attack $1 $g_return $rch $rbg $rfg
 			# Otherwise start following the closest target
 			else
 				_combat_mob_target[$1]=$g_return
 				combat_move_towards $1 $g_return
 			fi
-		# TODO - Close / Ranged attack type
+		# WORKING - Close / Ranged attack type
 		elif [ "$atype" = "r" ]; then
-			# If find_close_target
-				# attack
-			# Else
-				# find_closest_target
-				# If distance < 2
-					# Follow
-				# Else
-					# Attack
-			:
-		# TODO - Ranged attack type
+			# Find the closest target
+			combat_find_closest_target $1
+			_combat_mob_target[$1]=$g_return
+			target=$g_return
+			
+			# If the target is close, attack it
+			combat_square_distance $1 $target
+			if (( g_return <= 1 )); then
+				combat_attack $1 $target $rch $rbg $rfg
+			# If the target is only two steps away, follow it
+			elif (( g_return <= 2 )); then
+				combat_move_towards $1 $target
+			# If the target is in range then
+			elif (( g_return <= rrng )); then
+				# 50% chance of either attacking or closing in
+				if (( RANDOM % 2 == 0 )); then
+					combat_attack $1 $target $rch $rbg $rfg $rdmg
+				else
+					combat_move_towards $1 $target
+				fi
+			# Otherwise close in on the target
+			else
+				combat_move_towards $1 $target
+			fi
+		# Ranged attack type
 		else
-			# find_closest_target
-			# Attack
-			:
-		fi		
+			# If there is a target in range, attack it
+			if combat_find_closest_target $1 $rrng; then
+				_combat_mob_target[$1]=$g_return
+				combat_attack $1 $g_return $rch $rbg $rfg $rdmg
+			# Otherwise start following the closest target
+			else
+				_combat_mob_target[$1]=$g_return
+				combat_move_towards $1 $g_return
+			fi
+		fi
 	fi
 	
 	ui_render_roster
@@ -1441,7 +1540,7 @@ function combat_mode
 	
 	# Main input loop
 	while :; do
-		mob_idx=_combat_num_mobs
+		mob_idx=$_combat_num_mobs
 		while :; do
 			# Wrapping    
 			if (( mob_idx >= _combat_num_mobs + _combat_num_chars )); then

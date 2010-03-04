@@ -14,12 +14,12 @@ Systems to Implement
   - Generic one-tile scoped, multiple-effected-tiles animation system
   + Explosion animation
   * Healing animation
-  * Extra data for ranged weapons and monsters about projectile char & color
+  + Extra data for ranged weapons and monsters about projectile char & color
 * Ranged Combat
   + Ranged targeting
   + Ranged attack
   + Projectile animation
-  * Ranged AI
+  + Ranged AI
 * Data
   + Add armor
   * Add weapons
@@ -36,14 +36,16 @@ Systems to Implement
 * 3D Dungeons ???
 
 Issues to Resolve
-+ Make equiping and unequiping items update stats.
 * Randomly select starting position for monsters.
 * Include follower and leader spawns.
 * In party member selection UI disable party members that are out of bounds.
 * Display AC and DMG in inventory UI when selecting H, B, S or W types.
-* Rework targeting handler to support location-based target type and ranges.
 
 Changes
-Added full range of armor
-Added party, equipment and inventory saving support
-Equiping and unequiping items now updates stats
+Reworked targeting handler to support location-based target type and ranges
+Added data for weapon ranges and weapon projectiles
+Tweeked hills tile, added water and deep water tiles
+Added pure ranged AI, changed combat_attack and combat_find_closest_target
+Added Close with Optional Ranged AI
+Added data for item and monster ranges and projectiles
+Added Skeletal Archer and Troll monsters, will likely revamp all monsters soon

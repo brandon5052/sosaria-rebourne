@@ -61,3 +61,45 @@ Primary Class Ultimate		18-20
 Secondary Class Required	11
 Secondary Class Restricted	13
 Third Class Restricted		9,11
+
+
+
+
+
+
+= Monster Groups =
+
+== Magical Energies ==
+Inanimate Golems		3
+Primary Elementals		6
+Organic Golems			10
+Exotic Elementals		12
+Wisps					14
+
+== Earth Spirits ==
+Mongbat					1
+Goblin					3
+Ettin					5
+Orc						7
+Ogre					9
+
+== Demonic ==
+Gremlin					2
+Imp						5
+Shade					9
+Demon					13
+Balron					18
+
+== Undead ==
+Skeleton				4
+Mummy					6
+Zombie					9
+Wraith					12
+Liche					15
+
+== Dragons ==
+Wyvern					7
+Drake					10
+Wrym					13
+Dragon					16
+Ancient Dragon			19

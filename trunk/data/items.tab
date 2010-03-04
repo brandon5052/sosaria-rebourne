@@ -9,7 +9,11 @@
 #	TYP		Item type
 #	NUL		Must be 0
 #	AC		Armor class
-#	DMG		Damage
+#	DMG		Weapon Damage
+#	RNG		Weapon Range
+#	RCH		Weapon Ranged Character
+#	RBG		Weapon Ranged Background Color
+#	RFG		Weapon Ranged Foreground Color
 #	Proc	Function name to be invoked for this item
 #
 # Item Types:
@@ -28,11 +32,11 @@
 # accessories.
 #
 #
-# Special
+# Special None item. Note that this is also used for the "no weapon" weapon.
 #
 #
-#	Name					STR	DEX	INT	TYP	NUL
-0	None					0	0	0	N	0
+#	Name					STR	DEX	INT	TYP	DMG	RNG	RCH	RBG	RFG
+0	_None					0	0	0	N	1	1	*	k	k
 #
 #
 # Helms
@@ -53,16 +57,16 @@
 #	Name					STR	DEX	INT	TYP	AC
 64	a_Robe					8	8	0	B	3
 67	a_Woolen_Robe			9	8	0	B	5
-68	_Cloth_Armor				10	9	0	B	6
+68	_Cloth_Armor			10	9	0	B	6
 70	_Padded_Armor			11	9	0	B	7
 71	_Leather_Armor			12	10	0	B	8
-72	Studded_Leather_Armor	13	10	0	B	9
-76	Ringmail_Armor			14	11	0	B	11
-78	Chainmail_Armor			15	11	0	B	12
-80	Scalemail_Armor			16	12	0	B	13
-81	Platemail_Armor			17	12	0	B	14
-83	Dragon_Scale_Armor		19	14	0	B	16
-84	Dragon_Plate_Armor		20	14	0	B	18
+72	_Studded_Leather_Armor	13	10	0	B	9
+76	_Ringmail_Armor			14	11	0	B	11
+78	_Chainmail_Armor		15	11	0	B	12
+80	_Scalemail_Armor		16	12	0	B	13
+81	_Platemail_Armor		17	12	0	B	14
+83	_Dragon_Scale_Armor		19	14	0	B	16
+84	_Dragon_Plate_Armor		20	14	0	B	18
 #
 #
 # Dexderity-Based Armor
@@ -81,9 +85,9 @@
 #
 #
 #	Name					STR	DEX	INT	TYP	AC
-73	Sage_Robes				5	5	16	B	9
+73	_Sage_Robes				5	5	16	B	9
 75	the_Moonsilk_Robes		6	6	18	B	10
-77	Nystul's_Robes			7	7	20	B	11
+77	_Nystul's_Robes			7	7	20	B	11
 #
 #
 # Shields
@@ -93,7 +97,7 @@
 128	a_Wooden_Shield			11	8	0	S	1
 129	a_Round_Shield			12	8	0	S	2
 130	a_Kite_Shield			14	9	0	S	3
-131	Forearm_Plates			13	13	0	S	3
+131	_Forearm_Plates			13	13	0	S	3
 132	a_Tower_Shield			16	10	0	S	4
 133	the_Defender			13	18	0	S	4
 134	the_Dragon_Scale_Shield	18	13	0	S	5
@@ -102,29 +106,29 @@
 # Melee Weapons
 #
 #
-#	Name					STR	DEX	INT	TYP	DMG
-192	a_Longsword				12	7	0	M	10
+#	Name					STR	DEX	INT	TYP	DMG	RNG	RCH	RBG	RFG
+192	a_Longsword				12	7	0	M	10	1	-	k	w
 #
 #
 # 2-Handed Melee Weapons
 #
 #
-#	Name					STR	DEX	INT	TYP	DMG
-256	a_Claymore				15	10	0	m	15
+#	Name					STR	DEX	INT	TYP	DMG	RNG	RCH	RBG	RFG
+256	a_Claymore				15	10	0	m	15	1	/	k	w
 #
 #
 # Ranged Weapons
 #
 #
-#	Name					STR	DEX	INT	TYP	DMG
-320	a_Sling					5	5	0	R	4
+#	Name					STR	DEX	INT	TYP	DMG	RNG	RCH	RBG	RFG
+320	a_Sling					5	5	0	R	4	3	@	w	w
 #
 #
 # 2-Handed Ranged Weapons
 #
 #
-#	Name					STR	DEX	INT	TYP	DMG
-384	a_Bow					10	10	0	m	7
+#	Name					STR	DEX	INT	TYP	DMG	RNG	RCH	RBG	RFG
+384	a_Bow					10	10	0	r	7	5	|	k	y
 #
 #
 # Accessories
@@ -138,13 +142,13 @@
 #
 #
 # Healing Potions
-#	Name					STR	DEX	INT	TYP	Proc							TGT	Min	Max
-512	a_Minor_Healing_Potion	0	0	8	C	item_proc_pot_heal				P	20	30
-513	a_Healing_Potion		0	0	10	C	item_proc_pot_heal				P	50	75
-514	a_Major_Healing_Potion	0	0	14	C	item_proc_pot_heal				P	500	500
+#	Name					STR	DEX	INT	TYP	Proc							RNG	RCH	RBG	RFG	TGT	Min	Max
+512	a_Minor_Healing_Potion	0	0	8	C	item_proc_pot_heal				5	h	k	b	P	20	30
+513	a_Healing_Potion		0	0	10	C	item_proc_pot_heal				5	H	k	b	P	50	75
+514	a_Major_Healing_Potion	0	0	14	C	item_proc_pot_heal				5	H	b	t	P	500	500
 # Status Curing Potions
-#	Name					STR	DEX	INT	TYP	Proc							TGT
-528	a_Curing_Potion			0	0	4	C	item_proc_pot_cure				P
+#	Name					STR	DEX	INT	TYP	Proc							RNG	RCH	RBG	RFG	TGT
+528	a_Curing_Potion			0	0	4	C	item_proc_pot_cure				5	c	k	g	P
 # Explosion Potions
-#	Name					STR	DEX	INT	TYP	Proc							TGT	Min	Max
-544 a_Flaming_Oil_Potion	0	7	3	C	item_proc_explosion				M	15	25
+#	Name					STR	DEX	INT	TYP	Proc							RNG	RCH	RBG	RFG	TGT	Min	Max
+544 a_Flaming_Oil_Potion	0	7	3	C	item_proc_explosion				5	x	r	y	M	15	25
