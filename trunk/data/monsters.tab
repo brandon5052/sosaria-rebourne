@@ -46,7 +46,7 @@
 # 16	20	14	11
 #
 #	F#	L#	Name					TILE	EXP	STR	DEX	INT	DMG	AC	HP	MP	ATK	RDG	RNG	RCH	RBG	RFG
-0	0	3	a_Mongbat				513		5	2	7	10	4	1	10	10	C	0	0	-	k	k
+0	0	3	a_Mongbat				513		5	10	12	8	6	1	20	16	C	0	0	-	k	k
 1	1	3	a_Skeleton				512		10	6	6	0	4	3	15	0	C	0	0	-	k	k
 2	1	3	a_Skeletal_Archer		514		15	10	13	8	0	6	20	16	R	7	5	I	k	w
 3	1	3	a_Troll					515		25	14	11	8	10	9	28	16	r	6	5	K	k	y

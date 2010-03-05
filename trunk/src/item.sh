@@ -404,16 +404,25 @@ function item_get_target_type
 # $1	The item index of the item to use
 # $2	Monster index of the monster using the item
 # $3	Monster index of the target of the item
+# $4	If present, the X location of the monster on the combat map. Omit
+#		this parameter outside of combat.
+# $5	If present, the Y location of the monster on the combat map. Omit
+#		this parameter outside of combat.
 function item_use_item
 {
+	local log_msg
 	local -a ext
 
 	if ! item_remove_from_inventory $1; then
 		return 1
 	fi
-	log_write "${_combat_mob_name[$2]} used ${_item_name[$1]} on ${_combat_mob_name[$3]}."
+	log_msg="${_combat_mob_name[$2]} used ${_item_name[$1]}"
+	if (( $3 >= 0 )); then
+		log_msg="$log_msg on ${_combat_mob_name[$3]}."
+	fi
+	log_write "$log_msg"
 	ext=(${_item_ext[$1]})
-	${_item_param[$1]} "$2" "$3" "${ext[5]}" "${ext[6]}" "${ext[7]}"
+	${_item_param[$1]} "$2" "$3" "${ext[5]}" "${ext[6]}" "${ext[7]}" "$4" "$5"
 }
 
 # Healing potion proceedure
@@ -422,12 +431,16 @@ function item_use_item
 # $2	Monster index of the target of the item
 # $3	Minimum amount of damage to heal
 # $4	Maximum amount of damage to heal
+# $5	Not used
+# $6	X position for in-combat use
+# $7	Y position for in-combat use
 function item_proc_pot_heal
 {
-	animation_single ${_combat_mob_pos_x[$2]} ${_combat_mob_pos_y[$2]} \
-		${_combat_mob_tile[$2]} animation_proc_random_chars $COLOR_GREEN \
-		$COLOR_BLUE 20
-	combat_take_damage $2 $(( ( (RANDOM % ($4 - $3) + 1) + $3 ) * -1 ))
+	if [ -n "$6" ]; then
+		animation_single $6 $7 ${_combat_mob_tile[$2]} \
+			animation_proc_bg_sweep $COLOR_TEAL 0 3
+	fi
+	combat_take_damage $2 $(( ( (RANDOM % ( ($4 - $3) + 1) ) + $3 ) * -1 ))
 }
 
 # Exploding item proceedure
@@ -435,11 +448,76 @@ function item_proc_pot_heal
 # $1	Monster index of the monster using the item
 # $2	Monster index of the target of the item
 # $3	Minimum amount of damage
-# $4	Maximum amount of damag
+# $5	Not used
+# $6	X position for in-combat use
+# $7	Y position for in-combat use
 function item_proc_explosion
 {
-	animation_single ${_combat_mob_pos_x[$2]} ${_combat_mob_pos_y[$2]} \
-		${_combat_mob_tile[$2]} animation_proc_random_chars $COLOR_RED \
-		$COLOR_YELLOW 20
-	combat_take_damage $2 $(( (RANDOM % ($4 - $3) + 1) + $3 ))
+	if [ -n "$6" ]; then
+		animation_single $6 $7 ${_combat_mob_tile[$2]} \
+			animation_proc_random_chars $COLOR_RED $COLOR_YELLOW 20
+	fi
+	combat_take_damage $2 $(( (RANDOM % ( ($4 - $3) + 1) ) + $3 ))
+}
+
+# Exploding item proceedure for AoE items
+#
+# $1	Monster index of the monster using the item
+# $2	Monster index of the target of the item
+# $3	Minimum amount of damage
+# $4	Maximum amount of damag
+# $5	Not used
+# $6	X position for in-combat use
+# $7	Y position for in-combat use
+function item_proc_explosion_area
+{
+	local sx sy ex ey cx cy idx tile tilemap_ofs
+	local -a targets
+	
+	# AoE effects should be combat-only
+	if [ -z "$6" ]; then
+		return 1
+	fi
+	
+	# Define area
+	(( sx = $6 - 1 ))
+	(( ex = $6 + 1 ))
+	if (( sx < 0 )); then
+		sx=0
+	fi
+	if (( ex >= _combat_map_width )); then
+		(( ex = _combat_map_width - 1 ))
+	fi
+	(( sy = $7 - 1 ))
+	(( ey = $7 + 1 ))
+	if (( sy < 0 )); then
+		sy=0
+	fi
+	if (( ey >= _combat_map_height )); then
+		(( ey = _combat_map_height - 1 ))
+	fi
+	
+	# Prep animations and targets
+	animation_reset_queue
+	for (( cx=sx; cx <= ex; cx++ )); do
+		for (( cy=sy; cy <= ey; cy++ )); do
+			if combat_get_mob_at $cx $cy; then
+				tile=${_combat_mob_tile[$g_return]}
+				targets=(${targets[@]} $g_return)
+			else
+				tilemap_ofs=$(( cy * _combat_map_width + cx ))
+				tile=${_combat_map_tile[$tilemap_ofs]}
+			fi
+			animation_add_to_queue $cx $cy $tile animation_proc_random_chars \
+				$COLOR_RED $COLOR_YELLOW 20
+		done
+	done
+	
+	# Run animation and do damage
+	animation_run_all_until_done
+	for (( idx=0; idx < ${#targets[@]}; idx++ )); do
+		log_write "MOB ${targets[$idx]}"
+		combat_take_damage ${targets[$idx]} \
+			$(( (RANDOM % ( ($4 - $3) + 1) ) + $3 ))
+	done
 }

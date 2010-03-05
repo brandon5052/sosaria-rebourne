@@ -103,18 +103,37 @@
 134	the_Dragon_Scale_Shield	18	13	0	S	5
 #
 #
-# Melee Weapons
+# Strength-Based Weapons
 #
 #
 #	Name					STR	DEX	INT	TYP	DMG	RNG	RCH	RBG	RFG
-192	a_Longsword				12	7	0	M	10	1	-	k	w
+192	a_Broadsword			12	10	0	M	5	1	-	k	w
+192	a_Hatchet				13	11	0	M	5	1	-	k	w
+192	a_War_Pick				13	11	0	M	6	1	-	k	w
+192	a_Longsword				14	11	0	M	8	1	-	k	w
+192	a_Flail					15	12	0	M	9	1	-	k	w
+192	a_Bardeich				14	11	0	m	9	1	-	k	w
+192	a_Mace					16	12	0	M	10	1	-	k	w
+192	a_Halberd				15	12	0	m	11	1	-	k	w
+192	a_Scythe				16	12	0	m	13	1	-	k	w
+192	a_War_Hammer			17	13	0	m	15	1	-	k	w
+192	the_Blood_Drinker		18	13	0	M	17	1	-	k	w
+192	a_Claymore				17	13	0	m	17	1	-	k	w
+192	the_Blade_of_Justice	19	14	0	M	18	1	-	k	w
+192	a_Battle_Axe			18	13	0	m	18	1	-	k	w
+192	the_Skull_Crusher		18	13	0	m	21	1	-	k	w
+192	_Despise				20	14	0	M	22	1	-	k	w
+192	the_Gore_Cleaver		19	14	0	m	23	1	-	k	w
+192	_Hatred					20	14	0	m	25	1	-	k	w
+192	_Rage					21	14	0	M	26	1	-	k	w
+192	_Malace					22	14	0	m	32	1	-	k	w
 #
 #
-# 2-Handed Melee Weapons
+# Dexderity-Based Weapons
 #
 #
 #	Name					STR	DEX	INT	TYP	DMG	RNG	RCH	RBG	RFG
-256	a_Claymore				15	10	0	m	15	1	/	k	w
+192	a_Broadsword			12	10	0	M	5	1	-	k	w
 #
 #
 # Ranged Weapons
@@ -151,4 +170,5 @@
 528	a_Curing_Potion			0	0	4	C	item_proc_pot_cure				5	c	k	g	P
 # Explosion Potions
 #	Name					STR	DEX	INT	TYP	Proc							RNG	RCH	RBG	RFG	TGT	Min	Max
-544 a_Flaming_Oil_Potion	0	7	3	C	item_proc_explosion				5	x	r	y	M	15	25
+544 a_Flaming_Oil_Potion	8	8	3	C	item_proc_explosion				5	x	r	y	M	15	25
+545	a_Flaming_Oil_Keg		12	10	8	C	item_proc_explosion_area		3	8	r	y	L	15	25

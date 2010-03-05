@@ -1,51 +1,45 @@
 Systems to Implement
-+ Item system
-  + Items
-    + Equipable items
-    + Usable items and proceedures
-  + Inventory UI
-  + Use Item UI
-  + Equip Item UI
-  + Drop Item UI
-  + Add Item Function
-  + Drop Item Function
-* Animations
++ Animations
   + More generalized ranged animation wrapper
-  - Generic one-tile scoped, multiple-effected-tiles animation system
+  + Generic one-tile scoped, multiple-effected-tiles animation system
   + Explosion animation
-  * Healing animation
+  + Healing animation
   + Extra data for ranged weapons and monsters about projectile char & color
-* Ranged Combat
++ Ranged Combat
   + Ranged targeting
   + Ranged attack
   + Projectile animation
   + Ranged AI
+  + Location-based targeting
 * Data
   + Add armor
   * Add weapons
   * Add accessories
   * Add consumables
   * Add monsters
+* Looting
+  * Add loot table data to monsters
+  * Record loot tables on monster death
+  * Generate loot on combat end
+  * Implement loot UI
+* Magic
+* World Map / Area Map
   * Add base tile set
   * Add combat maps for base tile set
   * Add maps
-* Magic
-* World Map / Area Map
 * Dialog
 * Shopping
-* 3D Dungeons ???
 
 Issues to Resolve
-* Implement Powder Keg item.
 * Make gold, food, torches display in party roster work.
 * Make date, time and moon phase display in party roster work.
+* Look into using busy wait sleep in all cases.
 
 Changes
-Added follower and leader spawns to combat group spawning.
-Starting positions for monsters in combat are now randomly selected.
-Factored out command substitution from non-init code. Image and combat map compilation times drastically decreased.
-Added AC / DMG display to item type strings.
-Added optional coloration of items based on a comparison of item parameter to a numeric value, used for showing if equipment is better or worse than current in inventory UI.
-During a player turn the player's name is highlighted on the roster.
-Refactored config variables and UI for a max party of six. This is really just a personal preference thing. I played U4 and U5, and decided I liked six-member parties better than eight.
-Rearranged player status ui.
+Implemented location-based targeting and converted item system to support it.
+Changed calibrated sleep call implementation of jiffy_sleep to a calibrated busy wait. The former was annoyingly inaccurate under cygwin.
+Revamped animation system to be capable of multiple simultanious animations.
+Implemented Flaming Oil Keg item.
+Implemented Healing animation with animation_proc_bg_sweep.
+Removed 3D dungeons from the development roadmap. It's just gimicky, plus it's my least favorite type of dungeon crawler.
+Added max HP and MP increases to level-up handler.

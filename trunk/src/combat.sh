@@ -45,7 +45,7 @@ declare -r _combat_ranged_fg=$COLOR_WHITE
 declare -r _combat_ranged_bg=$COLOR_BLACK
 declare -r _combat_msg_sleep=500
 declare -r _combat_mob_move_sleep=250
-declare -r _combat_ranged_sleep=2
+declare -r _combat_ranged_sleep=5
 
 # Map data
 declare -a _combat_map_tile
@@ -237,7 +237,7 @@ function combat_load_group
 	fi
 	
 	# Follower amount, between 25% and 50% followers
-	(( followers = RANDOM % (to_spawn / 4) + (to_spawn / 4 + 1) ))
+	(( followers = RANDOM % (to_spawn / 4 + 1) + (to_spawn / 4) ))
 	
 	# Primary amount is total minus followers and leaders
 	(( primary = (to_spawn - followers) - leaders ))
@@ -778,7 +778,19 @@ function combat_player_target_handler
 			;;
 			ENTER|a|A)
 				# If we are here, cur_x cur_y is a valid target location.
-				if combat_get_mob_at $cur_x $cur_y; then
+				if [ "$3" = "location" ]; then
+					# If there is a mob here, record it's index
+					if combat_get_mob_at $cur_x $cur_y; then
+						g_return[0]=$g_return
+					else
+						g_return[0]=-1
+					fi
+					
+					# And record the location
+					g_return[1]=$cur_x
+					g_return[2]=$cur_y
+					valid_target=1
+				elif combat_get_mob_at $cur_x $cur_y; then
 					# If this is true, the mob's index is already in g_return
 					if [ "$3" = "monster" ]; then
 						if (( g_return < _combat_num_mobs )); then
@@ -793,14 +805,15 @@ function combat_player_target_handler
 						valid_target=1
 					fi
 				fi
-				# If we get here without returning we have an invalid target
 			;;
 			esac
 			
 			# If we have a valid target, handle it
 			if (( valid_target == 1 )); then
-				combat_render_mob $g_return
-				_combat_mob_target[$1]=$g_return
+				if (( $g_return >= 0 )); then
+					combat_render_mob $g_return
+					_combat_mob_target[$1]=$g_return
+				fi
 				ui_inform ""
 				return 0
 			fi
@@ -1092,7 +1105,7 @@ function combat_player_attack_handler
 # $1	The monster index of the player
 function combat_player_use_item
 {
-	local item_idx target_idx range ranged_opts target_type
+	local item_idx target_idx range ranged_opts target_type t_x t_y
 
 	# If we cancel the item selection, cancel
 	if ! ui_inventory "C" $1; then
@@ -1113,19 +1126,24 @@ function combat_player_use_item
 		return 1
 	fi
 	
-	# TODO - Handle location target type
-	
+	# Handle location target type
+	if [ "$target_type" = "location" ]; then
+		target_idx=$g_return
+		t_x=${g_return[1]}
+		t_y=${g_return[2]}
 	# Handle targeted items
-	target_idx=$g_return
+	else	
+		target_idx=$g_return
+		t_x=${_combat_mob_pos_x[$target_idx]}
+		t_y=${_combat_mob_pos_y[$target_idx]}
+	fi
 	
 	# Ranged animation
 	# Note that $ranged_opts splits into three parameters
-	combat_ranged_animation ${_combat_mob_pos_x[$1]} ${_combat_mob_pos_y[$1]} \
-		${_combat_mob_pos_x[$target_idx]} ${_combat_mob_pos_y[$target_idx]} \
-		$ranged_opts
-
+	combat_ranged_animation ${_combat_mob_pos_x[$1]} \
+		${_combat_mob_pos_y[$1]} $t_x $t_y $ranged_opts
 	# Use the item
-	item_use_item $item_idx $1 $target_idx
+	item_use_item $item_idx $1 $target_idx $t_x $t_y
 	
 	return 0
 }
@@ -1449,6 +1467,8 @@ function combat_do_monster_round
 # $2	The monster's new level
 function combat_on_level_up
 {
+	local hp_base
+	
 	log_write "${_combat_mob_name[$1]} gained a level!"
 	
 	# Should increase primary attribute
@@ -1456,12 +1476,15 @@ function combat_on_level_up
 		_combat_level_primary_mod == 0 )); then
 		if [ "${_combat_mob_class[$1]}" = "F" -o \
 			"${_combat_mob_class[$1]}" = "P" ]; then
+			log_write "Strength increased!"
 			(( _combat_mob_str[$1]++ ))
 		elif [ "${_combat_mob_class[$1]}" = "R" -o \
 			"${_combat_mob_class[$1]}" = "T" ]; then
+			log_write "Dexderity increased!"
 			(( _combat_mob_dex[$1]++ ))
 		elif [ "${_combat_mob_class[$1]}" = "S" -o \
 			"${_combat_mob_class[$1]}" = "M" ]; then
+			log_write "Intelligence increased!"
 			(( _combat_mob_int[$1]++ ))
 		fi
 	# Should increase secondary attribute
@@ -1469,12 +1492,15 @@ function combat_on_level_up
 		_combat_level_secondary_mod == 0 )); then
 		if [ "${_combat_mob_class[$1]}" = "R" -o \
 			"${_combat_mob_class[$1]}" = "M" ]; then
+			log_write "Strength increased!"
 			(( _combat_mob_str[$1]++ ))
 		elif [ "${_combat_mob_class[$1]}" = "F" -o \
 			"${_combat_mob_class[$1]}" = "S" ]; then
+			log_write "Dexderity increased!"
 			(( _combat_mob_dex[$1]++ ))
 		elif [ "${_combat_mob_class[$1]}" = "P" -o \
 			"${_combat_mob_class[$1]}" = "T" ]; then
+			log_write "Intelligence increased!"
 			(( _combat_mob_int[$1]++ ))
 		fi
 	# Should increase third attribute
@@ -1482,15 +1508,30 @@ function combat_on_level_up
 		_combat_level_third_mod == 0 )); then
 		if [ "${_combat_mob_class[$1]}" = "S" -o \
 			"${_combat_mob_class[$1]}" = "T" ]; then
+			log_write "Strength increased!"
 			(( _combat_mob_str[$1]++ ))
 		elif [ "${_combat_mob_class[$1]}" = "P" -o \
 			"${_combat_mob_class[$1]}" = "M" ]; then
+			log_write "Dexderity increased!"
 			(( _combat_mob_dex[$1]++ ))
 		elif [ "${_combat_mob_class[$1]}" = "F" -o \
 			"${_combat_mob_class[$1]}" = "R" ]; then
+			log_write "Intelligence increased!"
 			(( _combat_mob_int[$1]++ ))
 		fi
 	fi
+	
+	# HP and MP increase is determined by class.
+	case "${_combat_mob_class[$1]}" in
+	F|P) (( _combat_mob_hpmax[$1] += 16 )) ;;
+	R|M) (( _combat_mob_hpmax[$1] += 12 )) ;;
+	S|T) (( _combat_mob_hpmax[$1] += 8 )) ;;
+	esac
+	case "${_combat_mob_class[$1]}" in
+	S|M) (( _combat_mob_mpmax[$1] += 8 )) ;;
+	P|T) (( _combat_mob_mpmax[$1] += 4 )) ;;
+	F|R) (( _combat_mob_mpmax[$1] += 2 )) ;;
+	esac
 }
 
 
